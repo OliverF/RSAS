@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Networking\Client.cs" />
     <Compile Include="Networking\Connection.cs" />
+    <Compile Include="Networking\ConnectionMessageReceivedEventArgs.cs" />
     <Compile Include="Networking\Message.cs" />
     <Compile Include="Networking\Server.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
