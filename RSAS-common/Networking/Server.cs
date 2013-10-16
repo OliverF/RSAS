@@ -11,7 +11,7 @@ using System.Net.Sockets;
 
 namespace RSAS.Networking
 {
-    public delegate void ClientConnectedHandler(Connection newClient);
+    public delegate void ClientConnectedHandler(object sender, ServerClientConnectedEventArgs e);
 
     public class Server
     {
@@ -40,7 +40,7 @@ namespace RSAS.Networking
             {
                 TcpClient newClient = listener.AcceptTcpClient();
                 if (ClientConnected != null)
-                    ClientConnected(new Connection(newClient));
+                    ClientConnected(this, new ServerClientConnectedEventArgs(new Connection(newClient)));
             }
         }
     }

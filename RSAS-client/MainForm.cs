@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using RSAS.Networking;
+using RSAS.Networking.Messages;
 using System.Net;
 using System.Net.Sockets;
 
@@ -31,8 +32,19 @@ namespace RSAS.ClientSide
             List<string> temp2 = new List<string>();
             temp2.Add("don't forget");
             temp2.Add("about me!");
-            con.SendMessage(new RSAS.Networking.Message("hello", temp));
-            con.SendMessage(new RSAS.Networking.Message("hello", temp2));
+            //con.SendMessage(new RSAS.Networking.Message("hello", temp));
+            //con.SendMessage(new RSAS.Networking.Message("hello", temp2));
+            con.MessageReceived += new ConnectionMessageReceivedEventHandler(con_MessageReceived);
+        }
+
+        void con_MessageReceived(object sender, ConnectionMessageReceivedEventArgs e)
+        {
+            if (e.Message.GetType() == typeof(AuthenticationRequest))
+            {
+                //AuthenticationResponse message = e.Message as AuthenticationResponse;
+                Connection con = sender as Connection;
+                con.SendMessage(new AuthenticationResponse("username", "password"));
+            }
         }
     }
 }
