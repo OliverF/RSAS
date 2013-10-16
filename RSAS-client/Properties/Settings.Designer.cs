@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace RSAS.Client.Properties {
+namespace RSAS.ClientSide.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

@@ -8,7 +8,7 @@
     <ProjectGuid>{1BE99CFF-19A8-4395-8339-3A06FDB6AE88}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RSAS.Server</RootNamespace>
+    <RootNamespace>RSAS.ServerSide</RootNamespace>
     <AssemblyName>RSAS-server</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>

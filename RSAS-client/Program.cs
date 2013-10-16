@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace RSAS.Client
+namespace RSAS.ClientSide
 {
     static class Program
     {
