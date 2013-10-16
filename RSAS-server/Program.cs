@@ -13,7 +13,7 @@ namespace RSAS.ServerSide
         static void Main(string[] args)
         {
             //basic test
-            IPAddress ip = IPAddress.Parse("127.0.0.1");
+            IPAddress ip = IPAddress.Any;
             Server test = new Server(new System.Net.IPEndPoint(ip, 7070));
 
             test.ClientConnected += new ClientConnectedHandler(test_ClientConnected);
