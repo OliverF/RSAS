@@ -26,7 +26,7 @@ namespace RSAS.ServerSide
 
         static void test_ClientConnected(Connection newClient)
         {
-            newClient.MessageRecieved += new MessageRecievedhandler(newClient_MessageRecieved);
+            newClient.MessageReceived += new MessageReceivedHandler(newClient_MessageRecieved);
         }
 
         static void newClient_MessageRecieved(Message message)

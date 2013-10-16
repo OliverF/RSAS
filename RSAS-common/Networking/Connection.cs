@@ -10,7 +10,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace RSAS.Networking
 {
-    public delegate void MessageRecievedhandler(Message message);
+    public delegate void MessageReceivedHandler(Message message);
 
     public class Connection
     {
@@ -29,7 +29,8 @@ namespace RSAS.Networking
             get { return this.stream; }
         }
 
-        public event MessageRecievedhandler MessageRecieved;
+        public event MessageReceivedHandler MessageReceived;
+        public event EventHandler ConnectionClosed;
 
         public Connection(TcpClient client)
         {
@@ -52,11 +53,18 @@ namespace RSAS.Networking
         {
             while (true)
             {
+                if (!this.client.Connected)
+                {
+                    if (this.ConnectionClosed != null)
+                    {
+                        ConnectionClosed(this, new EventArgs());
+                    }
+                }
                 if (this.stream.DataAvailable)
                 {
                     Message message = formatter.Deserialize(this.stream) as Message;
-                    if (this.MessageRecieved != null)
-                        MessageRecieved(message);
+                    if (this.MessageReceived != null)
+                        MessageReceived(message);
                 }
                 Thread.Sleep(10);
             }
