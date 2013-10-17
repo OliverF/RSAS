@@ -7,9 +7,14 @@ namespace RSAS.ServerSide
 {
     class User
     {
-        public User()
+        private User()
         {
+            
+        }
 
+        public static User CreateFromUsername(string username)
+        {
+            return new User();
         }
     }
 }

@@ -52,6 +52,7 @@
     <Compile Include="Networking\Server.cs" />
     <Compile Include="Networking\ServerClientConnectedEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utilities\SecurityUtilities.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

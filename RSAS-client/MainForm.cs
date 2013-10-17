@@ -10,6 +10,7 @@ using RSAS.Networking;
 using RSAS.Networking.Messages;
 using System.Net;
 using System.Net.Sockets;
+using RSAS.Utilities;
 
 namespace RSAS.ClientSide
 {
@@ -41,9 +42,8 @@ namespace RSAS.ClientSide
         {
             if (e.Message.GetType() == typeof(AuthenticationRequest))
             {
-                //AuthenticationResponse message = e.Message as AuthenticationResponse;
                 Connection con = sender as Connection;
-                con.SendMessage(new AuthenticationResponse("username", "password"));
+                con.SendMessage(new AuthenticationResponse("username", SecurityUtilities.MD5Hash("password")));
             }
         }
     }

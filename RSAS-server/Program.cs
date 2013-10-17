@@ -14,6 +14,8 @@ namespace RSAS.ServerSide
         static void Main(string[] args)
         {
             //basic test
+            UserAuthenticator.LoadCredentials();
+
             IPAddress ip = IPAddress.Any;
             Server test = new Server(new System.Net.IPEndPoint(ip, 7070));
 
