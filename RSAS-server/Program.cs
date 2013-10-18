@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using System.Text.RegularExpressions;
 using RSAS.Networking;
 using RSAS.Networking.Messages;
 
@@ -17,14 +18,14 @@ namespace RSAS.ServerSide
             UserAuthenticator.LoadCredentials();
 
             IPAddress ip = IPAddress.Any;
-            Server test = new Server(new System.Net.IPEndPoint(ip, 7070));
+            Server server = new Server(new System.Net.IPEndPoint(ip, 7070));
 
-            test.ClientConnected += UserAuthenticator.AuthenticateConnection;
+            server.ClientConnected += UserAuthenticator.AuthenticateConnection;
 
-            test.Start();
+            server.Start();
 
-            Console.ReadLine();
-            
+            while (!Regex.IsMatch(Console.ReadLine(), @"\A(exit|quit|q)\Z")) ;
+
         }
     }
 }

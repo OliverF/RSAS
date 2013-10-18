@@ -19,16 +19,6 @@ namespace RSAS.Networking
         protected TcpClient client;
         protected NetworkStream stream;
 
-        public TcpClient Client
-        {
-            get { return this.client; }
-        }
-
-        public NetworkStream Stream
-        {
-            get { return this.stream; }
-        }
-
         public event ConnectionMessageReceivedEventHandler MessageReceived;
         public event EventHandler ConnectionClosed;
 
@@ -47,6 +37,11 @@ namespace RSAS.Networking
         public void SendMessage(Message message)
         {
             formatter.Serialize(this.stream, message);
+        }
+
+        public void Disconnect()
+        {
+            this.client.Close();
         }
 
         void CheckData()

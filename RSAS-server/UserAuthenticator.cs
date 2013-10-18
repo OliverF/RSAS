@@ -51,8 +51,19 @@ namespace RSAS.ServerSide
                     con.MessageReceived -= CheckAuthenticationResponse;
                     unauthenticatedConnections.Remove(con);
 
+                    //let the client know the result was successful
+                    con.SendMessage(new AuthenticationResult(true));
+
                     //create the new user object
                     User u = User.CreateFromUsername(message.Username);
+                }
+                else
+                {
+                    //let the client know the result was unsuccessful
+                    con.SendMessage(new AuthenticationResult(false));
+
+                    //disconnect
+                    con.Disconnect();
                 }
             }
         }
