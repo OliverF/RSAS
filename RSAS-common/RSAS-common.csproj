@@ -51,6 +51,7 @@
     <Compile Include="Networking\Messages\Generic.cs" />
     <Compile Include="Networking\Server.cs" />
     <Compile Include="Networking\ServerClientConnectedEventArgs.cs" />
+    <Compile Include="Plugins\PluginLoader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\SecurityUtilities.cs" />
   </ItemGroup>
