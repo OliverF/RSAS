@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RSAS.Plugins
 {
-    class PluginLoader
+    public class PluginLoader
     {
     }
 }
