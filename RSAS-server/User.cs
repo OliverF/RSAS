@@ -21,10 +21,20 @@ namespace RSAS.ServerSide
 
         public static User CreateFromUsername(string username)
         {
-            if (Directory.Exists(Path.Combine(Settings.USERPATH, username)))
+            if (Directory.Exists(User.GetProfileDirectory(username)))
                 return new User(username);
             else
                 return null;
+        }
+
+        public string GetProfileDirectory()
+        {
+            return User.GetProfileDirectory(this.username);
+        }
+
+        public static string GetProfileDirectory(string username)
+        {
+            return Path.Combine(Settings.USERPATH, username);
         }
     }
 }
