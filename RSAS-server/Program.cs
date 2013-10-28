@@ -26,6 +26,8 @@ namespace RSAS.ServerSide
 
             while (!Regex.IsMatch(Console.ReadLine(), @"\A(exit|quit|q)\Z")) ;
 
+            server.Stop();
+
         }
     }
 }

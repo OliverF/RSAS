@@ -18,6 +18,8 @@ namespace RSAS.Networking
         public event ClientConnectedHandler ClientConnected;
 
         TcpListener listener;
+        Thread acceptConnections;
+        volatile bool shouldAcceptConnections = false;
 
         public Server(IPEndPoint ip)
         {
@@ -29,19 +31,27 @@ namespace RSAS.Networking
             this.listener.Start();
 
             //start listening for new connections
-            Thread acceptConnections = new Thread(AcceptNewConnections);
+            this.shouldAcceptConnections = true;
+            this.acceptConnections = new Thread(AcceptNewConnections);
             acceptConnections.IsBackground = true;
             acceptConnections.Start();
         }
 
+        public void Stop()
+        {
+            this.shouldAcceptConnections = false;
+        }
+
         private void AcceptNewConnections()
         {
-            while (true)
+            while (this.shouldAcceptConnections)
             {
                 TcpClient newClient = listener.AcceptTcpClient();
-                if (ClientConnected != null)
+                if (ClientConnected != null && this.shouldAcceptConnections)
                     ClientConnected(this, new ServerClientConnectedEventArgs(new Connection(newClient)));
             }
+
+            this.listener.Stop();
         }
     }
 }
