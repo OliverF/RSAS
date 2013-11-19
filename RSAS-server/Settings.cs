@@ -7,6 +7,8 @@ namespace RSAS.ServerSide
 {
     static class Settings
     {
-        public static string USERPATH = "users";
+        public const string USERPATH = "users";
+        public const string ENTRYSCRIPTNAME = "sv_entry.lua";
+        public const string USERPLUGINPATH = "plugins";
     }
 }
