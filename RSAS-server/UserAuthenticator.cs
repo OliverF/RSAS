@@ -55,7 +55,7 @@ namespace RSAS.ServerSide
                     con.SendMessage(new AuthenticationResult(true));
 
                     //create the new user object
-                    User u = User.CreateFromUsername(message.Username);
+                    User u = User.CreateFromUsername(message.Username, new RSAS.Plugins.Frameworks.Base());
                 }
                 else
                 {
