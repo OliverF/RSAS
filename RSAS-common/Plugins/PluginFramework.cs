@@ -10,13 +10,16 @@ namespace RSAS.Plugins
 {
     public abstract class PluginFramework
     {
-        protected Dictionary<string, LuaManagedFunctionHandler> luaFunctions = new Dictionary<string, LuaManagedFunctionHandler>();
+        protected delegate void RegisterPluginFrameworkHandler(Lua lua);
 
-        protected string frameworkScriptName = "";
+        protected List<RegisterPluginFrameworkHandler> registerEvents = new List<RegisterPluginFrameworkHandler>();
+
+        protected List<string> frameworkScriptNames = new List<string>();
 
         public void MergeWith(PluginFramework existingFramework)
         {
-            this.luaFunctions.Concat(existingFramework.luaFunctions);
+            this.registerEvents = this.registerEvents.Concat(existingFramework.registerEvents).ToList();
+            this.frameworkScriptNames = this.frameworkScriptNames.Concat(existingFramework.frameworkScriptNames).ToList();
         }
 
         public static PluginFramework Merge(PluginFramework a, PluginFramework b)
@@ -28,17 +31,20 @@ namespace RSAS.Plugins
 
         public void InjectInto(Lua lua)
         {
-            string frameworkScript = null;
-            string frameworkScriptPath = Path.Combine(Settings.FRAMEWORKSCRIPTSPATH, this.frameworkScriptName);
-            if (frameworkScriptName != "" && File.Exists(frameworkScriptPath))
-                frameworkScript = File.ReadAllText(frameworkScriptPath);
-
-            if (frameworkScript != null)
-                lua.Execute(frameworkScript);
-
-            foreach (KeyValuePair<string, LuaManagedFunctionHandler> function in luaFunctions)
+            foreach (string frameworkScriptName in this.frameworkScriptNames)
             {
-                lua.RegisterGlobalFunction(function.Key, function.Value);
+                string frameworkScript = null;
+                string frameworkScriptPath = Path.Combine(Settings.FRAMEWORKSCRIPTSPATH, frameworkScriptName);
+                if (frameworkScriptName != "" && File.Exists(frameworkScriptPath))
+                    frameworkScript = File.ReadAllText(frameworkScriptPath);
+
+                if (frameworkScript != null)
+                    lua.Execute(frameworkScript);
+            }
+
+            foreach (RegisterPluginFrameworkHandler callback in registerEvents)
+            {
+                callback(lua);
             }
         }
     }

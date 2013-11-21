@@ -13,21 +13,24 @@ namespace RSAS.Plugins.Frameworks
     {
         public Base()
         {
-            frameworkScriptName = "base.lua";
+            this.frameworkScriptNames.Add("base.lua");
 
-            luaFunctions.Add("_RSAS_Print", delegate(LuaManagedFunctionArgs args)
+            registerEvents.Add(delegate(Lua lua)
             {
-                LuaType a = args.Input[0];
+                lua.RegisterGlobalFunction("_RSAS_Print", delegate(LuaManagedFunctionArgs args)
+                {
+                    LuaType a = args.Input[0];
 
-                LuaTable tbl = a as LuaTable;
+                    LuaTable tbl = a as LuaTable;
 
-                if (tbl == null)
-                    Console.WriteLine(a);
-                else
-                    LuaUtilities.RecurseLuaTable(tbl, delegate(string path, LuaValueType key, LuaType value)
-                    {
-                        Console.WriteLine(path + LuaTablePath.TablePathSeparator + key + ": " + value);
-                    });
+                    if (tbl == null)
+                        Console.WriteLine(a);
+                    else
+                        LuaUtilities.RecurseLuaTable(tbl, delegate(string path, LuaValueType key, LuaType value)
+                        {
+                            Console.WriteLine(path + LuaTablePath.TablePathSeparator + key + ": " + value);
+                        });
+                });
             });
         }
     }
