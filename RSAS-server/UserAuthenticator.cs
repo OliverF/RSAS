@@ -5,6 +5,7 @@ using System.Text;
 using RSAS.Networking;
 using RSAS.Networking.Messages;
 using RSAS.Utilities;
+using RSAS.Plugins.Frameworks;
 
 namespace RSAS.ServerSide
 {
@@ -54,8 +55,12 @@ namespace RSAS.ServerSide
                     //let the client know the result was successful
                     con.SendMessage(new AuthenticationResult(true));
 
+                    //setup the frameworks
+                    Base framework = new Base();
+                    framework.MergeWith(new RSAS.Plugins.Frameworks.Networking(con));
+
                     //create the new user object
-                    User u = User.CreateFromUsername(message.Username, new RSAS.Plugins.Frameworks.Base());
+                    User u = User.CreateFromUsername(message.Username, framework);
                 }
                 else
                 {
