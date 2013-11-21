@@ -17,6 +17,9 @@ namespace RSAS.Plugins
 
         public Plugin(string entryScriptPath, PluginFramework framework)
         {
+            script.LoadStandardLibrary(LuaStandardLibrary.Base);
+            script.LoadStandardLibrary(LuaStandardLibrary.Table);
+
             if (framework != null)
                 framework.InjectInto(script);
 
