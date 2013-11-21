@@ -49,6 +49,7 @@
     <Compile Include="Networking\Message.cs" />
     <Compile Include="Networking\Messages\Authentication.cs" />
     <Compile Include="Networking\Messages\Generic.cs" />
+    <Compile Include="Networking\Messages\Lua.cs" />
     <Compile Include="Networking\Server.cs" />
     <Compile Include="Networking\ServerClientConnectedEventArgs.cs" />
     <Compile Include="Plugins\Frameworks\Base.cs" />
