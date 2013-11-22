@@ -12,18 +12,20 @@ namespace RSAS.ServerSide
     class UserAuthenticator
     {
         static List<Connection> unauthenticatedConnections = new List<Connection>();
-        static Dictionary<string, string> hashedUserCredentials = new Dictionary<string, string>();
+        static Dictionary<string, User> users = new Dictionary<string, User>();
 
         public static void LoadCredentials()
         {
-            hashedUserCredentials.Add("username", SecurityUtilities.MD5Hash("password"));
+            //hashedUserCredentials.Add("username", SecurityUtilities.MD5Hash("password"));
+            User testUser = User.CreateFromUsername("username", SecurityUtilities.MD5Hash("password"));
+            users.Add("username", testUser);
         }
 
         static bool CheckCredentials(string username, string hashedPassword)
         {
-            if (hashedUserCredentials.ContainsKey(username))
+            if (users.ContainsKey(username))
             {
-                return (hashedUserCredentials[username] == hashedPassword);
+                return (users[username].AuthenticationKey == hashedPassword);
             }
             else
             {
@@ -55,12 +57,8 @@ namespace RSAS.ServerSide
                     //let the client know the result was successful
                     con.SendMessage(new AuthenticationResult(true));
 
-                    //setup the frameworks
-                    Base framework = new Base();
-                    framework.MergeWith(new RSAS.Plugins.Frameworks.Networking(con));
-
-                    //create the new user object
-                    User u = User.CreateFromUsername(message.Username, framework);
+                    //associate new connection with user instance
+                    users[message.Username].AssociateWithConnection(con);
                 }
                 else
                 {

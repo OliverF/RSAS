@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using Lua4Net;
@@ -15,14 +16,21 @@ namespace RSAS.Plugins.Frameworks
 
         Dictionary<string, LuaData> luaDataBuffer = new Dictionary<string, LuaData>();
 
-        Connection connection;
+        ObservableCollection<Connection> connections;
 
         Lua lua;
 
-        public Networking(Connection con)
+        public Networking(ObservableCollection<Connection> cons)
         {
-            this.connection = con;
-            this.connection.MessageReceived += new ConnectionMessageReceivedEventHandler(MessageReceived);
+            this.connections = cons;
+
+            foreach (Connection con in cons)
+            {
+                con.MessageReceived += new ConnectionMessageReceivedEventHandler(MessageReceived);
+            }
+
+            //hook in to future list changes
+            cons.CollectionChanged += new System.Collections.Specialized.NotifyCollectionChangedEventHandler(ConnectionsCollectionChanged);
 
             this.frameworkScriptNames.Add("networking.lua");
 
@@ -36,7 +44,8 @@ namespace RSAS.Plugins.Frameworks
                     LuaTable table = args.Input[1] as LuaTable;
 
                     if (table != null)
-                        connection.SendMessage(new LuaData(table, identifier));
+                        foreach(Connection con in this.connections)
+                            con.SendMessage(new LuaData(table, identifier));
                 });
 
                 lua.RegisterGlobalFunction("_RSAS_Networking_GetTable", delegate(LuaManagedFunctionArgs args)
@@ -50,6 +59,14 @@ namespace RSAS.Plugins.Frameworks
                     }
                 });
             });
+        }
+
+        void ConnectionsCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            foreach (Connection con in e.NewItems)
+            {
+                con.MessageReceived += new ConnectionMessageReceivedEventHandler(MessageReceived);
+            }
         }
 
         void MessageReceived(object sender, ConnectionMessageReceivedEventArgs e)
