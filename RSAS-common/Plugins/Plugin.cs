@@ -19,6 +19,7 @@ namespace RSAS.Plugins
         {
             script.LoadStandardLibrary(LuaStandardLibrary.Base);
             script.LoadStandardLibrary(LuaStandardLibrary.Table);
+            script.LoadStandardLibrary(LuaStandardLibrary.Math);
 
             if (framework != null)
                 framework.InjectInto(script);
