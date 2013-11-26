@@ -54,6 +54,7 @@
     <Compile Include="Networking\ServerClientConnectedEventArgs.cs" />
     <Compile Include="Plugins\Frameworks\Base.cs" />
     <Compile Include="Plugins\Frameworks\Networking.cs" />
+    <Compile Include="Plugins\Frameworks\Timer.cs" />
     <Compile Include="Plugins\Plugin.cs" />
     <Compile Include="Plugins\PluginFramework.cs" />
     <Compile Include="Plugins\PluginLoader.cs" />
