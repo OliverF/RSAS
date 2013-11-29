@@ -16,19 +16,19 @@ namespace RSAS.ClientSide
 {
     public partial class MainForm : Form
     {
+
+        Connection con;
         public MainForm()
         {
             InitializeComponent();
             //basic test
             TcpClient client = new TcpClient("127.0.0.1", 7070);
-            Connection con = new Connection(client);
+            con = new Connection(client);
             con.MessageReceived += new ConnectionMessageReceivedEventHandler(con_MessageReceived);
 
-            Node testNode = new Node(con);
-        }
+            RSAS.Plugins.Frameworks.Timer framework = new RSAS.Plugins.Frameworks.Timer();
 
-        private void button1_Click(object sender, EventArgs e)
-        {
+            Node testNode = new Node(con, framework);
         }
 
         void con_MessageReceived(object sender, ConnectionMessageReceivedEventArgs e)
