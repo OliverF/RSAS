@@ -28,33 +28,75 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.button1 = new System.Windows.Forms.Button();
+            this.menuStrip = new System.Windows.Forms.MenuStrip();
+            this.serversToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addServerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.serversSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.primaryDisplayPanel = new System.Windows.Forms.Panel();
+            this.menuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
-            // button1
+            // menuStrip
             // 
-            this.button1.Location = new System.Drawing.Point(84, 43);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.serversToolStripMenuItem});
+            this.menuStrip.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip.Name = "menuStrip";
+            this.menuStrip.Size = new System.Drawing.Size(784, 24);
+            this.menuStrip.TabIndex = 2;
+            this.menuStrip.Text = "Menu";
+            // 
+            // serversToolStripMenuItem
+            // 
+            this.serversToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addServerToolStripMenuItem,
+            this.serversSeparator});
+            this.serversToolStripMenuItem.Name = "serversToolStripMenuItem";
+            this.serversToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
+            this.serversToolStripMenuItem.Text = "Servers";
+            // 
+            // addServerToolStripMenuItem
+            // 
+            this.addServerToolStripMenuItem.Name = "addServerToolStripMenuItem";
+            this.addServerToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.addServerToolStripMenuItem.Text = "Add server...";
+            // 
+            // serversSeparator
+            // 
+            this.serversSeparator.Name = "serversSeparator";
+            this.serversSeparator.Size = new System.Drawing.Size(149, 6);
+            // 
+            // primaryDisplayPanel
+            // 
+            this.primaryDisplayPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.primaryDisplayPanel.Location = new System.Drawing.Point(0, 24);
+            this.primaryDisplayPanel.Name = "primaryDisplayPanel";
+            this.primaryDisplayPanel.Size = new System.Drawing.Size(784, 418);
+            this.primaryDisplayPanel.TabIndex = 4;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(284, 262);
-            this.Controls.Add(this.button1);
+            this.ClientSize = new System.Drawing.Size(784, 442);
+            this.Controls.Add(this.primaryDisplayPanel);
+            this.Controls.Add(this.menuStrip);
+            this.MainMenuStrip = this.menuStrip;
             this.Name = "MainForm";
             this.Text = "MainForm";
+            this.menuStrip.ResumeLayout(false);
+            this.menuStrip.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
         #endregion
 
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.MenuStrip menuStrip;
+        private System.Windows.Forms.ToolStripMenuItem serversToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addServerToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator serversSeparator;
+        private System.Windows.Forms.Panel primaryDisplayPanel;
     }
 }
