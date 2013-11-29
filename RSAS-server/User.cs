@@ -29,6 +29,7 @@ namespace RSAS.ServerSide
             this.pluginLoader = new PluginLoader();
             Base framework = new Base();
             framework.MergeWith(new RSAS.Plugins.Frameworks.Networking(connections));
+            framework.MergeWith(new RSAS.Plugins.Frameworks.Timer());
 
             //load plugins from directory
             this.pluginLoader.LoadPlugins(Path.Combine(Settings.USERPATH, username, Settings.USERPLUGINPATH), Settings.ENTRYSCRIPTNAME, framework);
