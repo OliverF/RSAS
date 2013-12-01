@@ -18,11 +18,16 @@ setmetatable(RSAS.GUI.Control, {
 	})
 
 RSAS.GUI.Control.ControlType = ""
+RSAS.GUI.Control.ControlID = ""
 
-function RSAS.GUI.Control.New(controlType)
+function RSAS.GUI.Control.New(controlType, controlID)
 	local newControl = {}
 	--give newControl the RSAS.GUI.Control metatable
 	setmetatable(newControl, RSAS.GUI.Control)
 	newControl.ControlType = controlType
+	newControl.ControlID = controlID
+
+	_RSAS_GUI_CreateControl(controlType, controlID)
+
 	return newControl
 end

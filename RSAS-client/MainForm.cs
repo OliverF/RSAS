@@ -27,6 +27,7 @@ namespace RSAS.ClientSide
             con.MessageReceived += new ConnectionMessageReceivedEventHandler(con_MessageReceived);
 
             RSAS.Plugins.Frameworks.Timer framework = new RSAS.Plugins.Frameworks.Timer();
+            framework.MergeWith(new GUIFramework(this.primaryDisplayPanel));
 
             Node testNode = new Node(con, framework);
         }
