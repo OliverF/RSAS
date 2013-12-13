@@ -7,7 +7,7 @@ using Lua4Net.Types;
 
 namespace RSAS.Utilities
 {
-    class LuaUtilities
+    public class LuaUtilities
     {
         public delegate void RecurseLuaTableCallback(string path, LuaValueType key, LuaType value);
 
