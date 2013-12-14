@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 namespace RSAS.Networking
 {
@@ -22,6 +23,8 @@ namespace RSAS.Networking
         public event ConnectionMessageReceivedEventHandler MessageReceived;
         public event EventHandler ConnectionClosed;
 
+        public bool Connected { get { return this.client.Connected; } }
+
         public Connection(TcpClient client)
         {
             this.formatter = new BinaryFormatter();
@@ -36,7 +39,17 @@ namespace RSAS.Networking
 
         public void SendMessage(Message message)
         {
-            formatter.Serialize(this.stream, message);
+            if (!this.client.Connected)
+                throw new System.InvalidOperationException("Stream is not connected.");
+            try
+            {
+                formatter.Serialize(this.stream, message);
+            }
+            catch (Exception e)
+            {
+                if (e is IOException || e is ArgumentException)
+                    this.Disconnect();
+            }
         }
 
         public void Disconnect()
@@ -46,15 +59,8 @@ namespace RSAS.Networking
 
         void CheckData()
         {
-            while (true)
+            while (this.client.Connected)
             {
-                if (!this.client.Connected)
-                {
-                    if (this.ConnectionClosed != null)
-                    {
-                        ConnectionClosed(this, new EventArgs());
-                    }
-                }
                 if (this.stream.DataAvailable)
                 {
                     Message message = formatter.Deserialize(this.stream) as Message;
@@ -62,6 +68,11 @@ namespace RSAS.Networking
                         MessageReceived(this,  new ConnectionMessageReceivedEventArgs(message));
                 }
                 Thread.Sleep(10);
+            }
+
+            if (this.ConnectionClosed != null)
+            {
+                ConnectionClosed(this, new EventArgs());
             }
         }
     }

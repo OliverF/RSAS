@@ -24,10 +24,8 @@ namespace RSAS.Plugins.Frameworks
         {
             this.connections = cons;
 
-            foreach (Connection con in cons)
-            {
-                con.MessageReceived += new ConnectionMessageReceivedEventHandler(MessageReceived);
-            }
+            foreach(Connection con in cons)
+                this.InitializeConnection(con);
 
             //hook in to future list changes
             cons.CollectionChanged += new System.Collections.Specialized.NotifyCollectionChangedEventHandler(ConnectionsCollectionChanged);
@@ -44,8 +42,16 @@ namespace RSAS.Plugins.Frameworks
                     LuaTable table = args.Input[1] as LuaTable;
 
                     if (table != null)
-                        foreach(Connection con in this.connections)
-                            con.SendMessage(new LuaData(table, identifier));
+                        foreach(Connection con in this.connections.ToList())
+                            try
+                            {
+                                con.SendMessage(new LuaData(table, identifier));
+                            }
+                            catch (InvalidOperationException e)
+                            {
+                                if (!con.Connected)
+                                    this.connections.Remove(con);
+                            }
                 });
 
                 lua.RegisterGlobalFunction("_RSAS_Networking_GetTable", delegate(LuaManagedFunctionArgs args)
@@ -61,12 +67,26 @@ namespace RSAS.Plugins.Frameworks
             });
         }
 
+        void ConnectionClosed(object sender, EventArgs e)
+        {
+            this.connections.Remove((Connection)sender);
+        }
+
         void ConnectionsCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            foreach (Connection con in e.NewItems)
-            {
-                con.MessageReceived += new ConnectionMessageReceivedEventHandler(MessageReceived);
-            }
+            if (e.NewItems == null)
+                return;
+            foreach(Connection con in e.NewItems)
+                this.InitializeConnection(con);
+        }
+
+        void InitializeConnection(Connection con)
+        {
+            if (con == null)
+                return;
+
+            con.MessageReceived += new ConnectionMessageReceivedEventHandler(MessageReceived);
+            con.ConnectionClosed += new EventHandler(ConnectionClosed);
         }
 
         void MessageReceived(object sender, ConnectionMessageReceivedEventArgs e)
