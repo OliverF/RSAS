@@ -7,15 +7,17 @@ using System.Drawing;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Windows.Forms.DataVisualization.Charting.Data;
 using System.Windows.Forms.DataVisualization.Charting.ChartTypes;
+using System.ComponentModel;
 using Lua4Net;
 using Lua4Net.Types;
 using RSAS.Plugins;
+using RSAS.Utilities;
 
 namespace RSAS.ClientSide
 {
     class GUIFramework : PluginFramework
     {
-        enum ControlType { LineChart };
+        enum ControlType { Chart };
 
         Dictionary<string, ResizableControlWrapper> controls = new Dictionary<string, ResizableControlWrapper>();
 
@@ -44,9 +46,18 @@ namespace RSAS.ClientSide
                         //handle each type of input
                         switch (type)
                         {
-                            case ControlType.LineChart:
+                            case ControlType.Chart:
                                 {
-                                    control = new ResizableControlWrapper(new Chart());
+                                    Chart chart = new Chart();
+
+                                    ChartArea chartArea = new ChartArea();
+                                    chart.ChartAreas.Add(chartArea);
+
+                                    Legend legend = new Legend();
+                                    legend.Name = "legend";
+                                    chart.Legends.Add(legend);
+
+                                    control = new ResizableControlWrapper(chart);
                                     break;
                                 }
                             default:
@@ -60,10 +71,97 @@ namespace RSAS.ClientSide
                         parent.Controls.Add(control.Control);
                         return;
                     }
-                    catch (Exception)
+                    catch (ArgumentException)
                     {
                         return;
                     }
+                });
+
+                lua.RegisterGlobalFunction("_RSAS_GUI_Chart_SetXY", delegate(LuaManagedFunctionArgs args)
+                {
+                    LuaString controlID = args.Input[0] as LuaString;
+                    LuaTable values = args.Input[1] as LuaTable;
+                    LuaString seriesName = args.Input[2] as LuaString;
+
+                    if (values == null || controlID == null || seriesName == null || !this.controls.ContainsKey(controlID.Value))
+                        return;
+
+                    Chart chart = this.controls[controlID.Value].Control as Chart;
+
+                    if (chart == null)
+                        return;
+                    
+                    Series series = chart.Series.FindByName(seriesName.Value);
+
+                    if (series == null)
+                        return;
+
+                    //reset
+                    series.Points.Clear();
+
+                    Dictionary<LuaValueType, DataPoint> points = new Dictionary<LuaValueType, DataPoint>();
+
+                    LuaUtilities.RecurseLuaTableCallback callback = new LuaUtilities.RecurseLuaTableCallback(delegate(List<LuaValueType> path, LuaValueType key, LuaType value)
+                    {
+                        if (path.Count <= 0)
+                            return;
+
+                        //set new point if this key doesn't exist
+                        if (!points.ContainsKey(path[0]))
+                            points.Add(path[0], new DataPoint());
+
+                        LuaNumber component = value as LuaNumber;
+
+                        if (component == null)
+                            return;
+
+                        //check type of element - x or y
+                        if (key.ToString() == "x")
+                        {
+                            points[path[0]].XValue = component.Value;
+                        }
+                        else if (key.ToString() == "y")
+                        {
+                            double[] yValues = { component.Value };
+                            points[path[0]].YValues = yValues;
+                        }
+                    });
+
+                    LuaUtilities.RecurseLuaTable(values, callback);
+
+                    foreach (KeyValuePair<LuaValueType, DataPoint> kv in points)
+                        series.Points.Add(kv.Value);
+                });
+
+                lua.RegisterGlobalFunction("_RSAS_GUI_Chart_CreateSeries", delegate(LuaManagedFunctionArgs args)
+                {
+                    LuaString controlID = args.Input[0] as LuaString;
+                    LuaString seriesName = args.Input[1] as LuaString;
+                    LuaString seriesType = args.Input[2] as LuaString;
+
+                    if (controlID == null || seriesName == null || !this.controls.ContainsKey(controlID.Value))
+                        return;
+
+                    Chart chart = this.controls[controlID.Value].Control as Chart;
+
+                    if (chart == null)
+                        return;
+
+                    Series series = new Series(seriesName.Value);
+                    series.ChartType = SeriesChartType.Line;
+                    
+
+                    if (seriesType != null)
+                    {
+                        try
+                        {
+                            SeriesChartType type = (SeriesChartType)Enum.Parse(typeof(SeriesChartType), seriesType.ToString(), true);
+                            series.ChartType = type;
+                        }
+                        catch (ArgumentException) { }
+                    }
+
+                    chart.Series.Add(series);
                 });
             });
         }
