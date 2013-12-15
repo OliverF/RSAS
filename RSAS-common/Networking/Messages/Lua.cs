@@ -11,7 +11,7 @@ namespace RSAS.Networking.Messages
     [Serializable]
     public class LuaData : Message
     {
-        Dictionary<string, LuaType> serializedTable;
+        Dictionary<List<LuaValueType>, LuaType> serializedTable;
 
         public string Identifier { get; set; }
 

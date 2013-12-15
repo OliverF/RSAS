@@ -9,21 +9,22 @@ namespace RSAS.Utilities
 {
     public class LuaUtilities
     {
-        public delegate void RecurseLuaTableCallback(string path, LuaValueType key, LuaType value);
+        public delegate void RecurseLuaTableCallback(List<LuaValueType> path, LuaValueType key, LuaType value);
 
         public static void RecurseLuaTable(LuaTable root, RecurseLuaTableCallback callback)
         {
-            RecurseLuaTable(root, "", 0, callback);
+            RecurseLuaTable(root, new List<LuaValueType>(), callback);
         }
 
-        static void RecurseLuaTable(LuaTable root, string sub, int level, RecurseLuaTableCallback callback)
+        static void RecurseLuaTable(LuaTable root, List<LuaValueType> path, RecurseLuaTableCallback callback)
         {
+            //fields at the current level
             IDictionary<LuaValueType, LuaType> fields;
 
-            if (sub == "")
+            if (path.Count == 0)
                 fields = root.FetchTableFields();
             else
-                fields = root.FetchTableFields(LuaTablePath.StringToPath(sub));
+                fields = root.FetchTableFields(path);
 
             foreach (KeyValuePair<LuaValueType, LuaType> v in fields)
             {
@@ -31,33 +32,28 @@ namespace RSAS.Utilities
 
                 if (tableValue == null)
                 {
-                    callback(sub, v.Key, v.Value);
+                    callback(path.ToList(), v.Key, v.Value);
                 }
                 else
                 {
-                    string path = "";
-                    if (sub == "")
-                        path = v.Key.ToString();
-                    else
-                        path = sub + "." + v.Key.ToString();
-                    int nlevel = level + 1;
-                    RecurseLuaTable(root, path, nlevel, callback);
+                    //copy current path (pointing to parent table)
+                    List<LuaValueType> subPath = path.ToList();
+                    //add element path (pointing to this table element)
+                    subPath.Add(v.Key);
+                    //recurse into this table element, starting at parent table path + this element key
+                    RecurseLuaTable(root, subPath, callback);
                 }
 
             }
         }
 
-        public static Dictionary<string, LuaType> LuaTableToDictionary(LuaTable table)
+        public static Dictionary<List<LuaValueType>, LuaType> LuaTableToDictionary(LuaTable table)
         {
-            Dictionary<string, LuaType> values = new Dictionary<string, LuaType>();
-            RecurseLuaTableCallback lvc = delegate(string path, LuaValueType key, LuaType value)
+            Dictionary<List<LuaValueType>, LuaType> values = new Dictionary<List<LuaValueType>, LuaType>();
+            RecurseLuaTableCallback lvc = delegate(List<LuaValueType> path, LuaValueType key, LuaType value)
             {
-                string totalPath = "";
-                if (path == "")
-                    totalPath = key.ToString();
-                else
-                    totalPath = path + "." + key.ToString();
-                values.Add(totalPath, value);
+                path.Add(key);
+                values.Add(path, value);
             };
 
             LuaUtilities.RecurseLuaTable(table, lvc);
@@ -65,30 +61,47 @@ namespace RSAS.Utilities
             return values;
         }
 
-        public static LuaTable DictionaryToLuaTable(Dictionary<string, LuaType> dictionary, LuaTable lt)
+        public static LuaTable DictionaryToLuaTable(Dictionary<List<LuaValueType>, LuaType> dictionary, LuaTable table)
         {
 
-            foreach (KeyValuePair<string, LuaType> kv in dictionary)
+            foreach (KeyValuePair<List<LuaValueType>, LuaType> kv in dictionary)
             {
-                //find path to this key
-                int dotCount = kv.Key.Count(f => f == LuaTablePath.TablePathSeparator);
-                int lastDotPos = kv.Key.LastIndexOf(LuaTablePath.TablePathSeparator);
-                string path = kv.Key;
-                if (lastDotPos > 0 && dotCount > 0)
-                    path = kv.Key.Remove(lastDotPos);
+                //copy key path
+                List<LuaValueType> path = kv.Key.ToList();
+                //neglect last segment
+                path.RemoveAt(path.Count - 1);
 
-                LuaType value = lt.GetField(LuaTablePath.StringToPath(path));
+                if (path.Count > 0)
+                {
+                    //build sub tables
+                    List<LuaValueType> cumulativePath = new List<LuaValueType>();
+                    cumulativePath.Add(path[0]);
+                    foreach (LuaValueType key in path)
+                    {
+                        LuaType value = table.GetField(cumulativePath);
 
-                LuaNilValue nil = value as LuaNilValue;
-
-                if (nil != null && dotCount > 0)
-                    lt.CreateSubTable(LuaTablePath.StringToPath(path));
+                        LuaNilValue nil = value as LuaNilValue;
+                        if (nil != null)
+                            table.CreateSubTable(cumulativePath);
+                    }
+                }
 
                 LuaValueType lvt = kv.Value as LuaValueType;
-                lt.SetFieldValue(LuaTablePath.StringToPath(kv.Key), lvt);
+                table.SetFieldValue(kv.Key, lvt);
             }
 
-            return lt;
+            return table;
+        }
+
+        public static string GenerateTablePath(IEnumerable<LuaValueType> path)
+        {
+            string p = "";
+            foreach (LuaValueType v in path)
+            {
+                p += "." + v.ToString();
+            }
+
+            return p;
         }
     }
 }

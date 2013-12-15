@@ -26,9 +26,9 @@ namespace RSAS.Plugins.Frameworks
                     if (tbl == null)
                         Console.WriteLine(a);
                     else
-                        LuaUtilities.RecurseLuaTable(tbl, delegate(string path, LuaValueType key, LuaType value)
+                        LuaUtilities.RecurseLuaTable(tbl, delegate(List<LuaValueType> path, LuaValueType key, LuaType value)
                         {
-                            Console.WriteLine(path + LuaTablePath.TablePathSeparator + key + ": " + value);
+                            Console.WriteLine(LuaUtilities.GenerateTablePath(path) + LuaTablePath.TablePathSeparator + key + ": " + value);
                         });
                 });
             });
