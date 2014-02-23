@@ -35,6 +35,8 @@ function RSAS.GUI.Control.New(controlType, controlID)
 		setmetatable(newControl, RSAS.GUI.Chart)
 	elseif(controlType == "label") then
 		setmetatable(newControl, RSAS.GUI.Label)
+	elseif(controlType == "container") then
+		setmetatable(newControl, RSAS.GUI.Container)
 	end
 
 	return newControl
@@ -50,6 +52,14 @@ end
 
 function RSAS.GUI.Control:SetParent(parent)
 	_RSAS_GUI_Control_SetParent(self.ControlID, parent.ControlID)
+end
+
+function RSAS.GUI.Control:SetLocation(x, y)
+	_RSAS_GUI_Control_SetLocation(self.ControlID, x, y)
+end
+
+function RSAS.GUI.Control:SetSize(width, height)
+	_RSAS_GUI_Control_SetSize(self.ControlID, width, height)
 end
 
 
@@ -82,3 +92,12 @@ end
 setmetatable(Label, RSAS.GUI.Control)
 
 RSAS.GUI.Label = Label
+
+
+
+local Container = {}
+Container.__index = Container
+
+setmetatable(Container, RSAS.GUI.Control)
+
+RSAS.GUI.Container = Container

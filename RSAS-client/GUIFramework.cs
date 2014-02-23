@@ -17,9 +17,9 @@ namespace RSAS.ClientSide
 {
     class GUIFramework : PluginFramework
     {
-        enum ControlType { Chart, Label };
+        enum ControlType { Container, Chart, Label };
 
-        Dictionary<string, ResizableControlWrapper> controls = new Dictionary<string, ResizableControlWrapper>();
+        Dictionary<string, Control> controls = new Dictionary<string, Control>();
 
         public GUIFramework(Control parent)
         {
@@ -42,38 +42,10 @@ namespace RSAS.ClientSide
                     {
                         type = (ControlType)Enum.Parse(typeof(ControlType), args.Input[0].ToString(), true);
 
-                        ResizableControlWrapper control;
-                        //handle each type of input
-                        switch (type)
-                        {
-                            case ControlType.Chart:
-                                {
-                                    Chart chart = new Chart();
+                        Control control = ControlFromType(type);
 
-                                    ChartArea chartArea = new ChartArea();
-                                    chart.ChartAreas.Add(chartArea);
-
-                                    Legend legend = new Legend();
-                                    legend.Name = "legend";
-                                    chart.Legends.Add(legend);
-
-                                    control = new ResizableControlWrapper(chart);
-                                    break;
-                                }
-                            case ControlType.Label:
-                                {
-                                    control = new ResizableControlWrapper(new Label());
-                                    break;
-                                }
-                            default:
-                                {
-                                    control = new ResizableControlWrapper(new Control());
-                                    break;
-                                }
-                        }
-                        ConfigureControl(control.BaseControl, controlID.Value);
                         controls.Add(controlID.Value, control);
-                        parent.Controls.Add(control.BaseControl);
+                        parent.Controls.Add(control);
                         return;
                     }
                     catch (ArgumentException)
@@ -90,10 +62,56 @@ namespace RSAS.ClientSide
                     if (controlID == null || parentControlID == null || !this.controls.ContainsKey(controlID.Value) || !this.controls.ContainsKey(parentControlID.Value))
                         return;
 
-                    Control parentControl = this.controls[parentControlID.Value].BaseControl;
+                    Control parentControl = this.controls[parentControlID.Value];
 
-                    parentControl.Controls.Add(this.controls[controlID.Value].BaseControl);
+                    parentControl.Controls.Add(this.controls[controlID.Value]);
+                });
 
+                lua.RegisterGlobalFunction("_RSAS_GUI_Control_SetLocation", delegate(LuaManagedFunctionArgs args)
+                {
+                    LuaString controlID = args.Input[0] as LuaString;
+                    LuaNumber x = args.Input[1] as LuaNumber;
+                    LuaNumber y = args.Input[2] as LuaNumber;
+
+                    if (controlID == null || !this.controls.ContainsKey(controlID.Value))
+                        return;
+
+                    if (x != null && y != null)
+                    {
+                        controls[controlID.Value].Location = new Point((int)x.Value, (int)y.Value);
+                    }
+                    else if (x != null)
+                    {
+                        controls[controlID.Value].Location = new Point((int)x.Value, controls[controlID.Value].Location.Y);
+                    }
+                    else if (y != null)
+                    {
+                        controls[controlID.Value].Location = new Point(controls[controlID.Value].Location.X, (int)y.Value);
+                    }
+                    
+                });
+
+                lua.RegisterGlobalFunction("_RSAS_GUI_Control_SetSize", delegate(LuaManagedFunctionArgs args)
+                {
+                    LuaString controlID = args.Input[0] as LuaString;
+                    LuaNumber width = args.Input[1] as LuaNumber;
+                    LuaNumber height = args.Input[2] as LuaNumber;
+
+                    if (controlID == null || !this.controls.ContainsKey(controlID.Value))
+                        return;
+
+                    if (width != null && height != null)
+                    {
+                        controls[controlID.Value].Size = new Size((int)width.Value, (int)height.Value);
+                    }
+                    else if (width != null)
+                    {
+                        controls[controlID.Value].Size = new Size((int)width.Value, controls[controlID.Value].Size.Height);
+                    }
+                    else if (height != null)
+                    {
+                        controls[controlID.Value].Size = new Size(controls[controlID.Value].Size.Width, (int)height.Value);
+                    }
                 });
 
                 lua.RegisterGlobalFunction("_RSAS_GUI_Chart_SetXY", delegate(LuaManagedFunctionArgs args)
@@ -105,7 +123,7 @@ namespace RSAS.ClientSide
                     if (values == null || controlID == null || seriesName == null || !this.controls.ContainsKey(controlID.Value))
                         return;
 
-                    Chart chart = this.controls[controlID.Value].BaseControl as Chart;
+                    Chart chart = this.controls[controlID.Value] as Chart;
 
                     if (chart == null)
                         return;
@@ -161,7 +179,7 @@ namespace RSAS.ClientSide
                     if (controlID == null || seriesName == null || !this.controls.ContainsKey(controlID.Value))
                         return;
 
-                    Chart chart = this.controls[controlID.Value].BaseControl as Chart;
+                    Chart chart = this.controls[controlID.Value] as Chart;
 
                     if (chart == null)
                         return;
@@ -191,7 +209,7 @@ namespace RSAS.ClientSide
                     if (controlID == null || text == null || !this.controls.ContainsKey(controlID.Value))
                         return;
 
-                    Label label = this.controls[controlID.Value].BaseControl as Label;
+                    Label label = this.controls[controlID.Value] as Label;
 
                     if (label == null)
                         return;
@@ -202,12 +220,37 @@ namespace RSAS.ClientSide
             });
         }
 
-        private void ConfigureControl(Control control, string controlID)
+        private Control ControlFromType(ControlType type)
         {
-            //default configuration
-            control.Location = new Point(10, 10);
-            control.Width = 200;
-            control.Height = 150;
+            //handle each type of input
+            switch (type)
+            {
+                case ControlType.Chart:
+                    {
+                        Chart chart = new Chart();
+
+                        ChartArea chartArea = new ChartArea();
+                        chart.ChartAreas.Add(chartArea);
+
+                        Legend legend = new Legend();
+                        legend.Name = "legend";
+                        chart.Legends.Add(legend);
+
+                        return chart;
+                    }
+                case ControlType.Label:
+                    {
+                        return new Label();
+                    }
+                case ControlType.Container:
+                    {
+                        return new ResizableContainer();
+                    }
+                default:
+                    {
+                        return new Control();
+                    }
+            }
         }
     }
 }
