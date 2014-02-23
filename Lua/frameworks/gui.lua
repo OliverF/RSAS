@@ -33,6 +33,8 @@ function RSAS.GUI.Control.New(controlType, controlID)
 	--assign specific class methods
 	if (controlType == "chart") then
 		setmetatable(newControl, RSAS.GUI.Chart)
+	elseif(controlType == "label") then
+		setmetatable(newControl, RSAS.GUI.Label)
 	end
 
 	return newControl
@@ -44,6 +46,10 @@ end
 
 function RSAS.GUI.Control:GetType()
 	return self.ControlType
+end
+
+function RSAS.GUI.Control:SetParent(parent)
+	_RSAS_GUI_Control_SetParent(self.ControlID, parent.ControlID)
 end
 
 
@@ -63,3 +69,16 @@ end
 setmetatable(Chart, RSAS.GUI.Control)
 
 RSAS.GUI.Chart = Chart
+
+
+
+local Label = {}
+Label.__index = Label
+
+function Label:SetText(text)
+	_RSAS_GUI_Label_SetText(self.ControlID, text)
+end
+
+setmetatable(Label, RSAS.GUI.Control)
+
+RSAS.GUI.Label = Label

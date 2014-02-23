@@ -17,7 +17,7 @@ namespace RSAS.ClientSide
 {
     class GUIFramework : PluginFramework
     {
-        enum ControlType { Chart };
+        enum ControlType { Chart, Label };
 
         Dictionary<string, ResizableControlWrapper> controls = new Dictionary<string, ResizableControlWrapper>();
 
@@ -60,21 +60,40 @@ namespace RSAS.ClientSide
                                     control = new ResizableControlWrapper(chart);
                                     break;
                                 }
+                            case ControlType.Label:
+                                {
+                                    control = new ResizableControlWrapper(new Label());
+                                    break;
+                                }
                             default:
                                 {
                                     control = new ResizableControlWrapper(new Control());
                                     break;
                                 }
                         }
-                        ConfigureControl(control.Control, controlID.Value);
+                        ConfigureControl(control.BaseControl, controlID.Value);
                         controls.Add(controlID.Value, control);
-                        parent.Controls.Add(control.Control);
+                        parent.Controls.Add(control.BaseControl);
                         return;
                     }
                     catch (ArgumentException)
                     {
                         return;
                     }
+                });
+
+                lua.RegisterGlobalFunction("_RSAS_GUI_Control_SetParent", delegate(LuaManagedFunctionArgs args)
+                {
+                    LuaString controlID = args.Input[0] as LuaString;
+                    LuaString parentControlID = args.Input[1] as LuaString;
+
+                    if (controlID == null || parentControlID == null || !this.controls.ContainsKey(controlID.Value) || !this.controls.ContainsKey(parentControlID.Value))
+                        return;
+
+                    Control parentControl = this.controls[parentControlID.Value].BaseControl;
+
+                    parentControl.Controls.Add(this.controls[controlID.Value].BaseControl);
+
                 });
 
                 lua.RegisterGlobalFunction("_RSAS_GUI_Chart_SetXY", delegate(LuaManagedFunctionArgs args)
@@ -86,7 +105,7 @@ namespace RSAS.ClientSide
                     if (values == null || controlID == null || seriesName == null || !this.controls.ContainsKey(controlID.Value))
                         return;
 
-                    Chart chart = this.controls[controlID.Value].Control as Chart;
+                    Chart chart = this.controls[controlID.Value].BaseControl as Chart;
 
                     if (chart == null)
                         return;
@@ -142,7 +161,7 @@ namespace RSAS.ClientSide
                     if (controlID == null || seriesName == null || !this.controls.ContainsKey(controlID.Value))
                         return;
 
-                    Chart chart = this.controls[controlID.Value].Control as Chart;
+                    Chart chart = this.controls[controlID.Value].BaseControl as Chart;
 
                     if (chart == null)
                         return;
@@ -162,6 +181,23 @@ namespace RSAS.ClientSide
                     }
 
                     chart.Series.Add(series);
+                });
+
+                lua.RegisterGlobalFunction("_RSAS_GUI_Label_SetText", delegate(LuaManagedFunctionArgs args)
+                {
+                    LuaString controlID = args.Input[0] as LuaString;
+                    LuaString text = args.Input[1] as LuaString;
+
+                    if (controlID == null || text == null || !this.controls.ContainsKey(controlID.Value))
+                        return;
+
+                    Label label = this.controls[controlID.Value].BaseControl as Label;
+
+                    if (label == null)
+                        return;
+
+                    label.Text = text.Value;
+                    label.Update();
                 });
             });
         }
