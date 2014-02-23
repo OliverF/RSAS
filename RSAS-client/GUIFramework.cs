@@ -114,6 +114,28 @@ namespace RSAS.ClientSide
                     }
                 });
 
+                lua.RegisterGlobalFunction("_RSAS_GUI_Control_GetLocation", delegate(LuaManagedFunctionArgs args)
+                {
+                    LuaString controlID = args.Input[0] as LuaString;
+
+                    if (controlID == null || !this.controls.ContainsKey(controlID.Value))
+                        return;
+
+                    args.Output.Add(new LuaNumber(controls[controlID.Value].Location.X));
+                    args.Output.Add(new LuaNumber(controls[controlID.Value].Location.Y));
+                });
+
+                lua.RegisterGlobalFunction("_RSAS_GUI_Control_GetSize", delegate(LuaManagedFunctionArgs args)
+                {
+                    LuaString controlID = args.Input[0] as LuaString;
+
+                    if (controlID == null || !this.controls.ContainsKey(controlID.Value))
+                        return;
+
+                    args.Output.Add(new LuaNumber(controls[controlID.Value].Size.Width));
+                    args.Output.Add(new LuaNumber(controls[controlID.Value].Size.Height));
+                });
+
                 lua.RegisterGlobalFunction("_RSAS_GUI_Chart_SetXY", delegate(LuaManagedFunctionArgs args)
                 {
                     LuaString controlID = args.Input[0] as LuaString;

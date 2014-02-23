@@ -62,6 +62,14 @@ function RSAS.GUI.Control:SetSize(width, height)
 	_RSAS_GUI_Control_SetSize(self.ControlID, width, height)
 end
 
+function RSAS.GUI.Control:GetLocation()
+	return _RSAS_GUI_Control_GetLocation(self.ControlID)
+end
+
+function RSAS.GUI.Control:GetSize()
+	return _RSAS_GUI_Control_GetSize(self.ControlID)
+end
+
 
 
 local Chart = {}
