@@ -4,6 +4,22 @@ end
 
 RSAS.GUI = {}
 
+--Track controls
+RSAS.GUI.Controls = {}
+
+--Handle input callbacks
+function RSAS.GUI.Trigger(controlID, callback)
+	local control = RSAS.GUI.Controls[controlID]
+
+	if (not control) then return end
+
+	local callback = control[callback]
+
+	if (callback) then
+		callback()
+	end
+end
+
 --GUI Control class
 RSAS.GUI.Control = {}
 
@@ -30,6 +46,8 @@ function RSAS.GUI.Control.New(controlType, controlID)
 	--create the control with controlID handle
 	_RSAS_GUI_CreateControl(controlType, controlID)
 
+	RSAS.GUI.Controls[controlID] = newControl
+
 	--assign specific class methods
 	if (controlType == "chart") then
 		setmetatable(newControl, RSAS.GUI.Chart)
@@ -37,6 +55,8 @@ function RSAS.GUI.Control.New(controlType, controlID)
 		setmetatable(newControl, RSAS.GUI.Label)
 	elseif(controlType == "container") then
 		setmetatable(newControl, RSAS.GUI.Container)
+	elseif(controlType == "button") then
+		setmetatable(newControl, RSAS.GUI.Button)
 	end
 
 	return newControl
@@ -68,6 +88,10 @@ end
 
 function RSAS.GUI.Control:GetSize()
 	return _RSAS_GUI_Control_GetSize(self.ControlID)
+end
+
+function RSAS.GUI.Control:Remove()
+	_RSAS_GUI_Control_Remove(self.ControlID)
 end
 
 
@@ -109,3 +133,16 @@ Container.__index = Container
 setmetatable(Container, RSAS.GUI.Control)
 
 RSAS.GUI.Container = Container
+
+
+
+local Button = {}
+Button.__index = Button
+
+function Button:SetText(text)
+	_RSAS_GUI_Button_SetText(self.ControlID, text)
+end
+
+setmetatable(Button, RSAS.GUI.Control)
+
+RSAS.GUI.Button = Button

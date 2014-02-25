@@ -17,11 +17,15 @@ namespace RSAS.ClientSide
 {
     class GUIFramework : PluginFramework
     {
-        enum ControlType { Container, Chart, Label };
+        enum ControlType { Container, Chart, Label, Button };
 
         Dictionary<string, Control> controls = new Dictionary<string, Control>();
 
         Control parent;
+
+        delegate void ControlWork();
+
+        Lua lua;
 
         public GUIFramework(Control parent)
         {
@@ -31,8 +35,10 @@ namespace RSAS.ClientSide
 
             this.registerEvents.Add(delegate(Lua lua)
             {
+                this.lua = lua;
                 lua.RegisterGlobalFunction("_RSAS_GUI_CreateControl", this.CreateControl);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Control_SetParent", this.ControlSetParent);
+                lua.RegisterGlobalFunction("_RSAS_GUI_Control_Remove", this.ControlRemove);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Control_SetLocation", this.ControlSetLocation);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Control_SetSize", this.ControlSetSize);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Control_GetLocation", this.ControlGetLocation);
@@ -40,6 +46,7 @@ namespace RSAS.ClientSide
                 lua.RegisterGlobalFunction("_RSAS_GUI_Chart_SetXY", this.ChartSetXY);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Chart_CreateSeries", this.ChartCreateSeries);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Label_SetText", this.LabelSetText);
+                lua.RegisterGlobalFunction("_RSAS_GUI_Button_SetText", this.ButtonSetText);
             });
         }
 
@@ -69,11 +76,31 @@ namespace RSAS.ClientSide
                     {
                         return new ResizableContainer();
                     }
+                case ControlType.Button:
+                    {
+                        return new Button();
+                    }
                 default:
                     {
                         return new Control();
                     }
             }
+        }
+
+        private void ButtonSetText(LuaManagedFunctionArgs args)
+        {
+            LuaString controlID = args.Input[0] as LuaString;
+            LuaString text = args.Input[1] as LuaString;
+
+            if (controlID == null || text == null || !this.controls.ContainsKey(controlID.Value))
+                return;
+
+            Button button = this.controls[controlID.Value] as Button;
+
+            if (button == null)
+                return;
+
+            button.Text = text.Value;
         }
 
         private void LabelSetText(LuaManagedFunctionArgs args)
@@ -90,7 +117,6 @@ namespace RSAS.ClientSide
                 return;
 
             label.Text = text.Value;
-            label.Update();
         }
 
         private void ChartCreateSeries(LuaManagedFunctionArgs args)
@@ -248,6 +274,38 @@ namespace RSAS.ClientSide
             }
         }
 
+        private void ControlRemove(LuaManagedFunctionArgs args)
+        {
+            LuaString controlID = args.Input[0] as LuaString;
+
+            if (controlID == null || !this.controls.ContainsKey(controlID.Value))
+            {
+                return;
+            }
+
+            Control control = this.controls[controlID.Value];
+
+            if (control.Parent == null)
+                return;
+
+            //need to modify the parent control, created in a different thread
+            //use thread-safe invoke
+
+            ControlWork work = delegate()
+            {
+                control.Parent.Controls.Remove(control);
+            };
+
+            if (control.Parent.InvokeRequired)
+            {
+                control.Parent.Invoke(work);
+            }
+            else
+            {
+                work();
+            }
+        }
+
         private void ControlSetParent(LuaManagedFunctionArgs args)
         {
             LuaString controlID = args.Input[0] as LuaString;
@@ -277,6 +335,20 @@ namespace RSAS.ClientSide
                 type = (ControlType)Enum.Parse(typeof(ControlType), args.Input[0].ToString(), true);
 
                 Control control = ControlFromType(type);
+                control.Name = controlID.Value;
+
+                control.MouseClick += delegate(object sender, MouseEventArgs e)
+                {
+                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseClick')");
+                };
+                control.MouseEnter += delegate(object sender, EventArgs e)
+                {
+                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseEnter')");
+                };
+                control.MouseLeave += delegate(object sender, EventArgs e)
+                {
+                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseLeave')");
+                };
 
                 controls.Add(controlID.Value, control);
                 parent.Controls.Add(control);
