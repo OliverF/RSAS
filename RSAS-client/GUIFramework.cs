@@ -38,6 +38,7 @@ namespace RSAS.ClientSide
                 this.lua = lua;
                 lua.RegisterGlobalFunction("_RSAS_GUI_CreateControl", this.CreateControl);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Control_SetParent", this.ControlSetParent);
+                lua.RegisterGlobalFunction("_RSAS_GUI_Control_GetParent", this.ControlGetParent);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Control_Remove", this.ControlRemove);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Control_SetLocation", this.ControlSetLocation);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Control_SetSize", this.ControlSetSize);
@@ -206,6 +207,19 @@ namespace RSAS.ClientSide
                 series.Points.Add(kv.Value);
         }
 
+        private void ControlGetParent(LuaManagedFunctionArgs args)
+        {
+            LuaString controlID = args.Input[0] as LuaString;
+
+            if (controlID == null || !this.controls.ContainsKey(controlID.Value))
+                return;
+
+            Control parent = controls[controlID.Value].Parent;
+
+            if (this.controls.ContainsValue(parent))
+                args.Output.Add(new LuaString(parent.Name));
+        }
+
         private void ControlGetSize(LuaManagedFunctionArgs args)
         {
             LuaString controlID = args.Input[0] as LuaString;
@@ -316,7 +330,19 @@ namespace RSAS.ClientSide
 
             Control parentControl = this.controls[parentControlID.Value];
 
-            parentControl.Controls.Add(this.controls[controlID.Value]);
+            ControlWork work = delegate()
+            {
+                parentControl.Controls.Add(this.controls[controlID.Value]);
+            };
+
+            if (parentControl.InvokeRequired)
+            {
+                parentControl.Invoke(work);
+            }
+            else
+            {
+                work();
+            }
         }
 
         private void CreateControl(LuaManagedFunctionArgs args)

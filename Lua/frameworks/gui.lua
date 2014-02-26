@@ -74,16 +74,26 @@ function RSAS.GUI.Control:SetParent(parent)
 	_RSAS_GUI_Control_SetParent(self.ControlID, parent.ControlID)
 end
 
+function RSAS.GUI.Control:GetParent()
+	local parentID = _RSAS_GUI_Control_GetParent(self.ControlID)
+
+	if (parentID and RSAS.GUI.Controls[parentID]) then
+		return RSAS.GUI.Controls[parentID]
+	else
+		return false
+	end
+end
+
 function RSAS.GUI.Control:SetLocation(x, y)
 	_RSAS_GUI_Control_SetLocation(self.ControlID, x, y)
 end
 
-function RSAS.GUI.Control:SetSize(width, height)
-	_RSAS_GUI_Control_SetSize(self.ControlID, width, height)
-end
-
 function RSAS.GUI.Control:GetLocation()
 	return _RSAS_GUI_Control_GetLocation(self.ControlID)
+end
+
+function RSAS.GUI.Control:SetSize(width, height)
+	_RSAS_GUI_Control_SetSize(self.ControlID, width, height)
 end
 
 function RSAS.GUI.Control:GetSize()
