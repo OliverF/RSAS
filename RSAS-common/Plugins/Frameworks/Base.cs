@@ -11,11 +11,13 @@ namespace RSAS.Plugins.Frameworks
 {
     public class Base : PluginFramework
     {
+        static string frameworkScriptName = "base.lua";
+
         public Base()
         {
-            this.frameworkScriptNames.Add("base.lua");
+            this.frameworkScriptNames.Add(Base.frameworkScriptName);
 
-            registerEvents.Add(delegate(Lua lua)
+            registerEvents.Add(delegate(ThreadSafeLua lua)
             {
                 lua.RegisterGlobalFunction("_RSAS_Print", delegate(LuaManagedFunctionArgs args)
                 {

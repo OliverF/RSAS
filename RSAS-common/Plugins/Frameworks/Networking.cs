@@ -13,12 +13,13 @@ namespace RSAS.Plugins.Frameworks
 {
     public class Networking : PluginFramework
     {
+        static string frameworkScriptName = "networking.lua";
 
         Dictionary<string, LuaData> luaDataBuffer = new Dictionary<string, LuaData>();
 
         ObservableCollection<Connection> connections;
 
-        Lua lua;
+        ThreadSafeLua lua;
 
         public Networking(ObservableCollection<Connection> cons)
         {
@@ -30,9 +31,9 @@ namespace RSAS.Plugins.Frameworks
             //hook in to future list changes
             cons.CollectionChanged += new System.Collections.Specialized.NotifyCollectionChangedEventHandler(ConnectionsCollectionChanged);
 
-            this.frameworkScriptNames.Add("networking.lua");
+            this.frameworkScriptNames.Add(Networking.frameworkScriptName);
 
-            registerEvents.Add(delegate(Lua lua)
+            registerEvents.Add(delegate(ThreadSafeLua lua)
             {
                 this.lua = lua;
 
@@ -108,7 +109,7 @@ namespace RSAS.Plugins.Frameworks
 
         void TriggerCallbacks(string identifier)
         {
-            lua.Execute("RSAS.Networking.TriggerCallback('" + identifier + "')");
+            lua.Execute("RSAS.Networking.TriggerCallback('" + identifier + "')", Networking.frameworkScriptName);
         }
     }
 }

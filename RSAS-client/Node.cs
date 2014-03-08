@@ -11,17 +11,13 @@ namespace RSAS.ClientSide
 {
     class Node
     {
-        PluginLoader pluginLoader = new PluginLoader();
-        ObservableCollection<Connection> cons = new ObservableCollection<Connection>();
+        PluginLoader pluginLoader;
+        ObservableCollection<Connection> connections;
 
-        public Node(Connection con, PluginFramework framework)
+        public Node(ObservableCollection<Connection> connections, PluginLoader pluginLoader)
         {
-            cons.Add(con);
-
-            framework.MergeWith(new Base());
-            framework.MergeWith(new Plugins.Frameworks.Networking(cons));
-
-            pluginLoader.LoadPlugins(Settings.PLUGINPATH, Settings.ENTRYSCRIPTNAME, framework);
+            this.connections = connections;
+            this.pluginLoader = pluginLoader;
         }
     }
 }

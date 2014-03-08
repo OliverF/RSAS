@@ -17,6 +17,8 @@ namespace RSAS.ClientSide
 {
     class GUIFramework : PluginFramework
     {
+        static string frameworkScriptName = "gui.lua";
+
         enum ControlType { Container, Chart, Label, Button };
 
         Dictionary<string, Control> controls = new Dictionary<string, Control>();
@@ -25,15 +27,15 @@ namespace RSAS.ClientSide
 
         delegate void ControlWork();
 
-        Lua lua;
+        ThreadSafeLua lua;
 
         public GUIFramework(Control parent)
         {
             this.parent = parent;
 
-            this.frameworkScriptNames.Add("gui.lua");
+            this.frameworkScriptNames.Add(frameworkScriptName);
 
-            this.registerEvents.Add(delegate(Lua lua)
+            this.registerEvents.Add(delegate(ThreadSafeLua lua)
             {
                 this.lua = lua;
                 lua.RegisterGlobalFunction("_RSAS_GUI_CreateControl", this.CreateControl);
@@ -365,15 +367,15 @@ namespace RSAS.ClientSide
 
                 control.MouseClick += delegate(object sender, MouseEventArgs e)
                 {
-                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseClick')");
+                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseClick')", GUIFramework.frameworkScriptName);
                 };
                 control.MouseEnter += delegate(object sender, EventArgs e)
                 {
-                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseEnter')");
+                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseEnter')", GUIFramework.frameworkScriptName);
                 };
                 control.MouseLeave += delegate(object sender, EventArgs e)
                 {
-                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseLeave')");
+                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseLeave')", GUIFramework.frameworkScriptName);
                 };
 
                 controls.Add(controlID.Value, control);

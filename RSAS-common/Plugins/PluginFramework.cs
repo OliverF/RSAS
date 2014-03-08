@@ -10,7 +10,7 @@ namespace RSAS.Plugins
 {
     public abstract class PluginFramework
     {
-        protected delegate void RegisterPluginFrameworkHandler(Lua lua);
+        protected delegate void RegisterPluginFrameworkHandler(ThreadSafeLua lua);
 
         protected List<RegisterPluginFrameworkHandler> registerEvents = new List<RegisterPluginFrameworkHandler>();
 
@@ -29,7 +29,7 @@ namespace RSAS.Plugins
             return a;
         }
 
-        public void InjectInto(Lua lua)
+        public void InjectInto(ThreadSafeLua lua)
         {
             foreach (string frameworkScriptName in this.frameworkScriptNames)
             {
@@ -39,7 +39,7 @@ namespace RSAS.Plugins
                     frameworkScript = File.ReadAllText(frameworkScriptPath);
 
                 if (frameworkScript != null)
-                    lua.Execute(frameworkScript);
+                    lua.Execute(frameworkScript, frameworkScriptName);
             }
 
             foreach (RegisterPluginFrameworkHandler callback in registerEvents)

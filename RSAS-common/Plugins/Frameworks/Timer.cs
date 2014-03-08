@@ -10,11 +10,13 @@ namespace RSAS.Plugins.Frameworks
 {
     public class Timer : PluginFramework
     {
+        static string frameworkScriptName = "timer.lua";
+
         public Timer()
         {
-            this.frameworkScriptNames.Add("timer.lua");
+            this.frameworkScriptNames.Add(Timer.frameworkScriptName);
 
-            registerEvents.Add(delegate(Lua lua)
+            registerEvents.Add(delegate(ThreadSafeLua lua)
             {
                 lua.RegisterGlobalFunction("_RSAS_Timer_Register", delegate(LuaManagedFunctionArgs args)
                 {
@@ -26,7 +28,7 @@ namespace RSAS.Plugins.Frameworks
                         System.Timers.Timer timer = new System.Timers.Timer(delay.Value);
                         timer.Elapsed += new ElapsedEventHandler(delegate(object sender, ElapsedEventArgs e)
                         {
-                            lua.Execute("RSAS.Timer.TriggerCallback('" + callback + "')");
+                            lua.Execute("RSAS.Timer.TriggerCallback('" + callback + "')", Timer.frameworkScriptName);
                         });
                         timer.Start();
                     }

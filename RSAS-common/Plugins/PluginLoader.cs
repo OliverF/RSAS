@@ -9,8 +9,17 @@ namespace RSAS.Plugins
 {
     public class PluginLoader
     {
-        private Lua lua = new Lua();
+        Lua lua;
+        ThreadSafeLua safeLua;
 
+        public ThreadSafeLua ThreadSafeLua { get { return safeLua; } }
+
+        public PluginLoader()
+        {
+            this.lua = new Lua();
+            this.safeLua = new ThreadSafeLua(lua);
+        }
+        
         public void LoadPlugins(string pluginDirectory, string entryScriptName, PluginFramework framework)
         {
             lua.LoadStandardLibrary(LuaStandardLibrary.Base);
@@ -18,7 +27,7 @@ namespace RSAS.Plugins
             lua.LoadStandardLibrary(LuaStandardLibrary.Math);
 
             if (framework != null)
-                framework.InjectInto(lua);
+                framework.InjectInto(safeLua);
 
             if (Directory.Exists(pluginDirectory))
             {
@@ -29,7 +38,7 @@ namespace RSAS.Plugins
                     string entry = Path.Combine(path, entryScriptName);
                     if (File.Exists(entry))
                     {
-                        lua.Execute(File.ReadAllText(entry));
+                        safeLua.Execute(File.ReadAllText(entry), entry);
                     }
                 }
             }

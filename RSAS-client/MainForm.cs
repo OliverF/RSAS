@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -26,10 +27,21 @@ namespace RSAS.ClientSide
             con = new Connection(client);
             con.MessageReceived += new ConnectionMessageReceivedEventHandler(con_MessageReceived);
 
-            RSAS.Plugins.Frameworks.Timer framework = new RSAS.Plugins.Frameworks.Timer();
-            framework.MergeWith(new GUIFramework(this.primaryDisplayPanel));
+            ObservableCollection<Connection> connections = new ObservableCollection<Connection>();
+            connections.Add(con);
 
-            Node testNode = new Node(con, framework);
+            Plugins.Frameworks.Timer framework = new Plugins.Frameworks.Timer();
+            framework.MergeWith(new GUIFramework(this.primaryDisplayPanel));
+            framework.MergeWith(new Plugins.Frameworks.Base());
+            framework.MergeWith(new Plugins.Frameworks.Networking(connections));
+
+            Plugins.PluginLoader pluginLoader = new Plugins.PluginLoader();
+
+
+
+            pluginLoader.LoadPlugins(Settings.PLUGINPATH, Settings.ENTRYSCRIPTNAME, framework);
+
+            Node testNode = new Node(connections, pluginLoader);
         }
 
         void con_MessageReceived(object sender, ConnectionMessageReceivedEventArgs e)
