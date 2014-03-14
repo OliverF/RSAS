@@ -8,6 +8,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 using System.Windows.Forms.DataVisualization.Charting.Data;
 using System.Windows.Forms.DataVisualization.Charting.ChartTypes;
 using System.ComponentModel;
+using System.Threading;
 using Lua4Net;
 using Lua4Net.Types;
 using RSAS.Plugins;
@@ -103,7 +104,15 @@ namespace RSAS.ClientSide
             if (button == null)
                 return;
 
-            button.Text = text.Value;
+            ControlWork work = delegate()
+            {
+                button.Text = text.Value;
+            };
+
+            if (button.InvokeRequired)
+                button.Invoke(work);
+            else
+                work();
         }
 
         private void LabelSetText(LuaManagedFunctionArgs args)
@@ -119,7 +128,15 @@ namespace RSAS.ClientSide
             if (label == null)
                 return;
 
-            label.Text = text.Value;
+            ControlWork work = delegate()
+            {
+                label.Text = text.Value;
+            };
+
+            if (label.InvokeRequired)
+                label.Invoke(work);
+            else
+                work();
         }
 
         private void ChartCreateSeries(LuaManagedFunctionArgs args)
@@ -150,7 +167,15 @@ namespace RSAS.ClientSide
                 catch (ArgumentException) { }
             }
 
-            chart.Series.Add(series);
+            ControlWork work = delegate()
+            {
+                chart.Series.Add(series);
+            };
+
+            if (chart.InvokeRequired)
+                chart.Invoke(work);
+            else
+                work();
         }
 
         private void ChartSetXY(LuaManagedFunctionArgs args)
@@ -172,41 +197,51 @@ namespace RSAS.ClientSide
             if (series == null)
                 return;
 
-            //reset
-            series.Points.Clear();
-
-            Dictionary<LuaValueType, DataPoint> points = new Dictionary<LuaValueType, DataPoint>();
-
-            LuaUtilities.RecurseLuaTableCallback callback = new LuaUtilities.RecurseLuaTableCallback(delegate(List<LuaValueType> path, LuaValueType key, LuaType value)
+            ControlWork work = delegate()
             {
-                if (path.Count <= 0)
-                    return;
+                //reset
+                series.Points.Clear();
 
-                //set new point if this key doesn't exist
-                if (!points.ContainsKey(path[0]))
-                    points.Add(path[0], new DataPoint());
+                Dictionary<LuaValueType, DataPoint> points = new Dictionary<LuaValueType, DataPoint>();
 
-                LuaNumber component = value as LuaNumber;
-
-                if (component == null)
-                    return;
-
-                //check type of element - x or y
-                if (key.ToString() == "x")
+                LuaUtilities.RecurseLuaTableCallback callback = new LuaUtilities.RecurseLuaTableCallback(delegate(List<LuaValueType> path, LuaValueType key, LuaType value)
                 {
-                    points[path[0]].XValue = component.Value;
-                }
-                else if (key.ToString() == "y")
-                {
-                    double[] yValues = { component.Value };
-                    points[path[0]].YValues = yValues;
-                }
-            });
+                    if (path.Count <= 0)
+                        return;
 
-            LuaUtilities.RecurseLuaTable(values, callback);
+                    //set new point if this key doesn't exist
+                    if (!points.ContainsKey(path[0]))
+                        points.Add(path[0], new DataPoint());
 
-            foreach (KeyValuePair<LuaValueType, DataPoint> kv in points)
-                series.Points.Add(kv.Value);
+                    LuaNumber component = value as LuaNumber;
+
+                    if (component == null)
+                        return;
+
+                    //check type of element - x or y
+                    if (key.ToString() == "x")
+                    {
+                        points[path[0]].XValue = component.Value;
+                    }
+                    else if (key.ToString() == "y")
+                    {
+                        double[] yValues = { component.Value };
+                        points[path[0]].YValues = yValues;
+                    }
+                });
+
+                LuaUtilities.RecurseLuaTable(values, callback);
+
+                foreach (KeyValuePair<LuaValueType, DataPoint> kv in points)
+                    series.Points.Add(kv.Value);
+            };
+
+            if (chart.InvokeRequired)
+            {
+                chart.Invoke(work);
+            }
+            else
+                work();
         }
 
         private void ControlGetParent(LuaManagedFunctionArgs args)
@@ -253,18 +288,28 @@ namespace RSAS.ClientSide
             if (controlID == null || !this.controls.ContainsKey(controlID.Value))
                 return;
 
-            if (width != null && height != null)
+            Control control = controls[controlID.Value];
+
+            ControlWork work = delegate()
             {
-                controls[controlID.Value].Size = new Size((int)width.Value, (int)height.Value);
-            }
-            else if (width != null)
-            {
-                controls[controlID.Value].Size = new Size((int)width.Value, controls[controlID.Value].Size.Height);
-            }
-            else if (height != null)
-            {
-                controls[controlID.Value].Size = new Size(controls[controlID.Value].Size.Width, (int)height.Value);
-            }
+                if (width != null && height != null)
+                {
+                    control.Size = new Size((int)width.Value, (int)height.Value);
+                }
+                else if (width != null)
+                {
+                    control.Size = new Size((int)width.Value, control.Size.Height);
+                }
+                else if (height != null)
+                {
+                    control.Size = new Size(control.Size.Width, (int)height.Value);
+                }
+            };
+
+            if (parent.InvokeRequired)
+                parent.Invoke(work);
+            else
+                work();
         }
 
         private void ControlSetLocation(LuaManagedFunctionArgs args)
@@ -276,18 +321,28 @@ namespace RSAS.ClientSide
             if (controlID == null || !this.controls.ContainsKey(controlID.Value))
                 return;
 
-            if (x != null && y != null)
+            Control control = controls[controlID.Value];
+
+            ControlWork work = delegate()
             {
-                controls[controlID.Value].Location = new Point((int)x.Value, (int)y.Value);
-            }
-            else if (x != null)
-            {
-                controls[controlID.Value].Location = new Point((int)x.Value, controls[controlID.Value].Location.Y);
-            }
-            else if (y != null)
-            {
-                controls[controlID.Value].Location = new Point(controls[controlID.Value].Location.X, (int)y.Value);
-            }
+                if (x != null && y != null)
+                {
+                    control.Location = new Point((int)x.Value, (int)y.Value);
+                }
+                else if (x != null)
+                {
+                    control.Location = new Point((int)x.Value, control.Location.Y);
+                }
+                else if (y != null)
+                {
+                    control.Location = new Point(control.Location.X, (int)y.Value);
+                }
+            };
+
+            if (control.InvokeRequired)
+                control.Invoke(work);
+            else
+                work();
         }
 
         private void ControlRemove(LuaManagedFunctionArgs args)
@@ -313,13 +368,9 @@ namespace RSAS.ClientSide
             };
 
             if (control.Parent.InvokeRequired)
-            {
                 control.Parent.Invoke(work);
-            }
             else
-            {
                 work();
-            }
         }
 
         private void ControlSetParent(LuaManagedFunctionArgs args)
@@ -330,21 +381,18 @@ namespace RSAS.ClientSide
             if (controlID == null || parentControlID == null || !this.controls.ContainsKey(controlID.Value) || !this.controls.ContainsKey(parentControlID.Value))
                 return;
 
+            Control control = this.controls[controlID.Value];
             Control parentControl = this.controls[parentControlID.Value];
 
             ControlWork work = delegate()
             {
-                parentControl.Controls.Add(this.controls[controlID.Value]);
+                parentControl.Controls.Add(control);
             };
 
             if (parentControl.InvokeRequired)
-            {
                 parentControl.Invoke(work);
-            }
             else
-            {
                 work();
-            }
         }
 
         private void CreateControl(LuaManagedFunctionArgs args)
@@ -362,24 +410,60 @@ namespace RSAS.ClientSide
             {
                 type = (ControlType)Enum.Parse(typeof(ControlType), args.Input[0].ToString(), true);
 
-                Control control = ControlFromType(type);
-                control.Name = controlID.Value;
+                ControlWork work = delegate()
+                {
+                    Control control = ControlFromType(type);
+                    control.Name = controlID.Value;
 
-                control.MouseClick += delegate(object sender, MouseEventArgs e)
-                {
-                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseClick')", GUIFramework.frameworkScriptName);
-                };
-                control.MouseEnter += delegate(object sender, EventArgs e)
-                {
-                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseEnter')", GUIFramework.frameworkScriptName);
-                };
-                control.MouseLeave += delegate(object sender, EventArgs e)
-                {
-                    lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseLeave')", GUIFramework.frameworkScriptName);
+                    control.MouseClick += delegate(object sender, MouseEventArgs e)
+                    {
+                        /*
+                         * Must use a separate thread for this callback. This MouseClick delegate will be run in the GUI thread.
+                         * If a non-GUI thread calls another method of this class (though it will always be through through Lua.Execute),
+                         * then that thread must invoke a delegate using Control.Invoke() in order to be called in the GUI thread to safely modify a control.
+                         * Control.Invoke will hang the non-GUI thread until the GUI thread has had time to process the message queue,
+                         * and while it waits it also holds the mutex lock in ThreadSafeLua. So, the mutex lock is locked for any other thread and
+                         * the non-GUI thread is waiting on the GUI thread before it can move on and release the mutex (because of Control.Invoke)
+                         * and therefore if the MouseClick event is fired during this time, the GUI thread will call lua.Execute, which will
+                         * wait for the mutex lock to be released by the non-GUI thread. In that case, the GUI thread is waiting for the non-GUI
+                         * thread and vice versa. Then we have a deadlock and the GUI stops responding.
+                         */
+                        Thread t = new Thread(delegate()
+                        {
+                            lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseClick')", GUIFramework.frameworkScriptName);
+                        });
+                        t.IsBackground = true;
+                        t.Start();
+                    };
+                    control.MouseEnter += delegate(object sender, EventArgs e)
+                    {
+                        Thread t = new Thread(delegate()
+                        {
+                            lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseEnter')", GUIFramework.frameworkScriptName);
+                        });
+                        t.IsBackground = true;
+                        t.Start();
+                    };
+                    control.MouseLeave += delegate(object sender, EventArgs e)
+                    {
+                        Thread t = new Thread(delegate()
+                        {
+                            lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnMouseLeave')", GUIFramework.frameworkScriptName);
+                        });
+                        t.IsBackground = true;
+                        t.Start();
+                    };
+                    controls.Add(controlID.Value, control);
+                    parent.Controls.Add(control);
                 };
 
-                controls.Add(controlID.Value, control);
-                parent.Controls.Add(control);
+                if (parent.InvokeRequired)
+                {
+                    parent.Invoke(work);
+                }
+                else
+                    work();
+
                 return;
             }
             catch (ArgumentException)

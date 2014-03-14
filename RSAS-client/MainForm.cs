@@ -17,40 +17,68 @@ namespace RSAS.ClientSide
 {
     public partial class MainForm : Form
     {
-
         Connection con;
+        List<Node> nodes = new List<Node>();
+
         public MainForm()
         {
             InitializeComponent();
-            //basic test
-            TcpClient client = new TcpClient("127.0.0.1", 7070);
-            con = new Connection(client);
-            con.MessageReceived += new ConnectionMessageReceivedEventHandler(con_MessageReceived);
-
-            ObservableCollection<Connection> connections = new ObservableCollection<Connection>();
-            connections.Add(con);
-
-            Plugins.Frameworks.Timer framework = new Plugins.Frameworks.Timer();
-            framework.MergeWith(new GUIFramework(this.primaryDisplayPanel));
-            framework.MergeWith(new Plugins.Frameworks.Base());
-            framework.MergeWith(new Plugins.Frameworks.Networking(connections));
-
-            Plugins.PluginLoader pluginLoader = new Plugins.PluginLoader();
-
-
-
-            pluginLoader.LoadPlugins(Settings.PLUGINPATH, Settings.ENTRYSCRIPTNAME, framework);
-
-            Node testNode = new Node(connections, pluginLoader);
         }
 
-        void con_MessageReceived(object sender, ConnectionMessageReceivedEventArgs e)
+        private void addServerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (e.Message.GetType() == typeof(AuthenticationRequest))
+            AddServerForm addServerForm = new AddServerForm();
+            addServerForm.Show();
+            addServerForm.DetailsSubmitted += new AddServerForm.AddServerFormDetailsSubmittedEventHandler(addServerForm_DetailsSubmitted);
+        }
+
+        void addServerForm_DetailsSubmitted(object sender, AddServerFormDetailsSubmittedEventArgs e)
+        {
+            TcpClient client;
+            try
             {
-                Connection con = sender as Connection;
-                con.SendMessage(new AuthenticationResponse("username", SecurityUtilities.MD5Hash("password")));
+                client = new TcpClient(e.HostAddress.ToString(), e.HostPort);
             }
+            catch (SocketException)
+            {
+                string remoteHost = e.HostAddress.ToString() + ":" + e.HostPort;
+                string errorMessage = "Connection error: Could not connect to " + remoteHost + ".";
+                DialogResult result = MessageBox.Show(errorMessage, "Connection error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                if (result == DialogResult.Cancel)
+                    (sender as AddServerForm).Close();
+                return;
+            }
+
+            con = new Connection(client);
+            con.MessageReceived += new ConnectionMessageReceivedEventHandler(delegate(object connectionSender, ConnectionMessageReceivedEventArgs connectionMessageArgs)
+            {
+                if (connectionMessageArgs.Message.GetType() == typeof(AuthenticationRequest))
+                {
+                    (connectionSender as Connection).SendMessage(new AuthenticationResponse(e.Username, SecurityUtilities.MD5Hash(e.Password)));
+                }
+                else if (connectionMessageArgs.Message.GetType() == typeof(AuthenticationResult))
+                {
+                    AuthenticationResult authenticationResult = connectionMessageArgs.Message as AuthenticationResult;
+                    if (authenticationResult.AuthenticationAccepted)
+                    {
+                        ObservableCollection<Connection> connections = new ObservableCollection<Connection>();
+                        connections.Add(con);
+
+                        Plugins.Frameworks.Timer framework = new Plugins.Frameworks.Timer();
+                        framework.MergeWith(new GUIFramework(this.primaryDisplayPanel));
+                        framework.MergeWith(new Plugins.Frameworks.Base());
+                        framework.MergeWith(new Plugins.Frameworks.Networking(connections));
+
+                        Plugins.PluginLoader pluginLoader = new Plugins.PluginLoader();
+
+                        pluginLoader.LoadPlugins(Settings.PLUGINPATH, Settings.ENTRYSCRIPTNAME, framework);
+
+                        nodes.Add(new Node(e.ServerName, con, pluginLoader));
+                    }
+                }
+            });
+
+            (sender as AddServerForm).Close();
         }
     }
 }

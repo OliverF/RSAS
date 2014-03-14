@@ -60,6 +60,7 @@
             this.addServerToolStripMenuItem.Name = "addServerToolStripMenuItem";
             this.addServerToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.addServerToolStripMenuItem.Text = "Add server...";
+            this.addServerToolStripMenuItem.Click += new System.EventHandler(this.addServerToolStripMenuItem_Click);
             // 
             // serversSeparator
             // 

@@ -11,12 +11,18 @@ namespace RSAS.ClientSide
 {
     class Node
     {
+        string name;
         PluginLoader pluginLoader;
-        ObservableCollection<Connection> connections;
+        Connection connection;
 
-        public Node(ObservableCollection<Connection> connections, PluginLoader pluginLoader)
+        public string Name { get { return this.name; } }
+        public PluginLoader PluginLoader { get { return this.pluginLoader; } }
+        public Connection Connection { get { return this.connection; } }
+
+        public Node(string name, Connection connection, PluginLoader pluginLoader)
         {
-            this.connections = connections;
+            this.name = name;
+            this.connection = connection;
             this.pluginLoader = pluginLoader;
         }
     }
