@@ -11,19 +11,19 @@ namespace RSAS.Networking.Messages
     [Serializable]
     public class LuaData : Message
     {
-        Dictionary<List<LuaValueType>, LuaType> serializedTable;
+        string jsonLuaTable;
 
         public string Identifier { get; set; }
 
         public LuaData(LuaTable table, string identifier)
         {
-            this.serializedTable = LuaUtilities.LuaTableToDictionary(table);
+            this.jsonLuaTable = LuaUtilities.LuaTableToJson(table);
             this.Identifier = identifier;
         }
 
         public void GetLuaTable(LuaTable lt)
         {
-            LuaUtilities.DictionaryToLuaTable(this.serializedTable, lt);
+            LuaUtilities.JsonToLuaTable(this.jsonLuaTable, lt);
         }
     }
 }

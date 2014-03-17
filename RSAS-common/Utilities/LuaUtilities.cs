@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using Lua4Net;
 using Lua4Net.Types;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace RSAS.Utilities
 {
@@ -102,6 +104,131 @@ namespace RSAS.Utilities
             }
 
             return p;
+        }
+
+        static void MapLuaTablePathToJsonObject(JObject jObject, List<LuaValueType> remainingPath, LuaType endValue)
+        {
+            if (remainingPath.Count == 1)
+            {
+                //final index, set the value at this index
+                string key = remainingPath[0].ToString();
+
+                //find the appropriate type so that it remains the same at deserialization
+                if (endValue.GetType() == typeof(LuaString))
+                {
+                    LuaString ls = endValue as LuaString;
+                    jObject.Add(key, new JValue(ls.Value));
+                }
+                else if (endValue.GetType() == typeof(LuaNumber))
+                {
+                    LuaNumber ln = endValue as LuaNumber;
+                    jObject.Add(key, new JValue(ln.Value));
+                }
+                else if (endValue.GetType() == typeof(LuaBoolean))
+                {
+                    LuaBoolean lb = endValue as LuaBoolean;
+                    jObject.Add(key, new JValue(lb.Value));
+                }
+            }
+            else
+            {
+                //if this is not the final index, this must be another sub-table
+                //sub-tables can be represented with another JObject
+                JObject subObject;
+
+                //check if the sub-table exists from a previous recursion
+                if (jObject.Property(remainingPath[0].ToString()) == null)
+                {
+                    //property does not exist, create new JSON object
+                    subObject = new JObject();
+                    //add to parent
+                    jObject.Add(remainingPath[0].ToString(), subObject);
+                }
+                else
+                {
+                    //property exists, get the object representing the sub-table
+                    subObject = jObject[remainingPath[0].ToString()] as JObject;
+                }
+
+                //remove the segment of the path that has been mapped
+                remainingPath.RemoveAt(0);
+
+                //recurse another level
+                MapLuaTablePathToJsonObject(subObject, remainingPath, endValue);
+            }
+        }
+
+        public static string LuaTableToJson(LuaTable table)
+        {
+            JObject root = new JObject();
+
+            RecurseLuaTableCallback callback = delegate(List<LuaValueType> path, LuaValueType key, LuaType value)
+            {
+                //build path to value
+                path.Add(key);
+
+                MapLuaTablePathToJsonObject(root, path, value);
+            };
+
+            RecurseLuaTable(table, callback);
+
+            string json = root.ToString(Formatting.None, new JsonConverter[0]);
+            return json;
+        }
+
+        static void MapJsonObjectToLuaTable(JObject root, LuaTable table)
+        {
+            MapJsonObjectToLuaTable(root, table, "");
+        }
+
+        static void MapJsonObjectToLuaTable(JObject root, LuaTable table, string path)
+        {
+            foreach (JProperty property in root.Children())
+            {
+                string currentPath;
+                if (path != "")
+                    currentPath = path + LuaTablePath.TablePathSeparator + property.Name;
+                else
+                    currentPath = property.Name;
+
+                JToken child = property.Children().ElementAt(0);
+
+                if (child.Type == JTokenType.Object)
+                {
+                    //new sub-table
+                    table.CreateSubTable(LuaTablePath.StringToPath(currentPath));
+                    MapJsonObjectToLuaTable(child as JObject, table, currentPath);
+                }
+                else
+                {
+                    //final value
+                    switch (property.Value.Type)
+                    {
+                        case JTokenType.String:
+                            table.SetFieldValue(LuaTablePath.StringToPath(currentPath), new LuaString(property.Value.ToString()));
+                            break;
+                        case JTokenType.Float:
+                            double doubleValue = 0;
+                            if (double.TryParse(property.Value.ToString(), out doubleValue))
+                                table.SetFieldValue(LuaTablePath.StringToPath(currentPath), new LuaNumber(doubleValue));
+                            break;
+                        case JTokenType.Boolean:
+                            bool boolValue = false;
+                            if (bool.TryParse(property.Value.ToString(), out boolValue))
+                                table.SetFieldValue(LuaTablePath.StringToPath(currentPath), new LuaBoolean(boolValue));
+                            break;
+                    }
+                }
+            }
+        }
+
+        public static LuaTable JsonToLuaTable(string json, LuaTable table)
+        {
+            JObject root = JObject.Parse(json);
+
+            MapJsonObjectToLuaTable(root, table);
+
+            return table;
         }
     }
 }
