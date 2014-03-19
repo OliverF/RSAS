@@ -38,11 +38,16 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Includes\Lua4Net.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Includes\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="RSAS-common">
       <HintPath>..\RSAS-common\bin\Release\RSAS-common.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />

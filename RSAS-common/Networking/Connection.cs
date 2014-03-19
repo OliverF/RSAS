@@ -19,11 +19,14 @@ namespace RSAS.Networking
 
         protected TcpClient client;
         protected NetworkStream stream;
+        protected string remoteEndPoint;
 
         public event ConnectionMessageReceivedEventHandler MessageReceived;
         public event EventHandler ConnectionClosed;
 
         public bool Connected { get { return this.client.Connected; } }
+
+        public string RemoteEndPoint { get { return this.remoteEndPoint; } }
 
         public Connection(TcpClient client)
         {
@@ -31,6 +34,7 @@ namespace RSAS.Networking
 
             this.client = client;
             this.stream = client.GetStream();
+            this.remoteEndPoint = client.Client.RemoteEndPoint.ToString();
 
             Thread checkForData = new Thread(CheckData);
             checkForData.IsBackground = true;
