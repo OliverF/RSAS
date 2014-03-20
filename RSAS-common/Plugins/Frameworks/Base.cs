@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 using Lua4Net;
 using Lua4Net.Types;
 using RSAS.Utilities;
@@ -32,6 +33,32 @@ namespace RSAS.Plugins.Frameworks
                         {
                             Console.WriteLine(LuaUtilities.GenerateTablePath(path) + LuaTablePath.TablePathSeparator + key + ": " + value);
                         });
+                });
+
+                lua.RegisterGlobalFunction("_RSAS_Execute", delegate(LuaManagedFunctionArgs args)
+                {
+                    LuaString cmd = args.Input.ElementAtOrDefault(0) as LuaString;
+                    LuaString cmdArgs = args.Input.ElementAtOrDefault(1) as LuaString;
+
+                    if (cmd == null)
+                        return;
+
+                    ProcessStartInfo processInfo = new ProcessStartInfo(cmd.Value);
+                    processInfo.RedirectStandardOutput = true;
+                    processInfo.UseShellExecute = false;
+
+                    if (cmdArgs != null)
+                        processInfo.Arguments = cmdArgs.Value;
+
+                    try
+                    {
+                        Process p = Process.Start(processInfo);
+                        args.Output.Add(new LuaString(p.StandardOutput.ReadToEnd()));
+                    }
+                    catch
+                    {
+                        return;
+                    }
                 });
             });
         }
