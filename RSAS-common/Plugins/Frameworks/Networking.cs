@@ -39,16 +39,16 @@ namespace RSAS.Plugins.Frameworks
 
                 lua.RegisterGlobalFunction("_RSAS_Networking_SendTable", delegate(LuaManagedFunctionArgs args)
                 {
-                    string identifier = args.Input[0].ToString();
-                    LuaTable table = args.Input[1] as LuaTable;
+                    LuaString identifier = args.Input.ElementAtOrDefault(0) as LuaString;
+                    LuaTable table = args.Input.ElementAtOrDefault(1) as LuaTable;
 
-                    if (table != null)
+                    if (identifier != null && table != null)
                         foreach(Connection con in this.connections.ToList())
                             try
                             {
-                                con.SendMessage(new LuaData(table, identifier));
+                                con.SendMessage(new LuaData(table, identifier.Value));
                             }
-                            catch (InvalidOperationException e)
+                            catch (InvalidOperationException)
                             {
                                 if (!con.Connected)
                                     this.connections.Remove(con);
@@ -57,13 +57,12 @@ namespace RSAS.Plugins.Frameworks
 
                 lua.RegisterGlobalFunction("_RSAS_Networking_GetTable", delegate(LuaManagedFunctionArgs args)
                 {
-                    string identifier = args.Input[0].ToString();
-                    LuaTable table = args.Input[1] as LuaTable;
+                    LuaString identifier = args.Input.ElementAtOrDefault(0) as LuaString;
+                    LuaTable table = args.Input.ElementAtOrDefault(1) as LuaTable;
 
-                    if (table != null && luaDataBuffer.ContainsKey(identifier))
-                    {
-                        luaDataBuffer[identifier].GetLuaTable(table);
-                    }
+                    if (identifier != null && table != null)
+                        if (luaDataBuffer.ContainsKey(identifier.Value))
+                            luaDataBuffer[identifier.Value].GetLuaTable(table);
                 });
             });
         }

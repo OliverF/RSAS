@@ -21,7 +21,7 @@ namespace RSAS.Plugins.Frameworks
             {
                 lua.RegisterGlobalFunction("_RSAS_Print", delegate(LuaManagedFunctionArgs args)
                 {
-                    LuaType a = args.Input[0];
+                    LuaType a = args.Input.ElementAtOrDefault(0);
 
                     LuaTable tbl = a as LuaTable;
 

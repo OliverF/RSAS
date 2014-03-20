@@ -20,15 +20,15 @@ namespace RSAS.Plugins.Frameworks
             {
                 lua.RegisterGlobalFunction("_RSAS_Timer_Register", delegate(LuaManagedFunctionArgs args)
                 {
-                    string callback = args.Input[0].ToString();
-                    LuaNumber delay = args.Input[1] as LuaNumber;
+                    LuaString callback = args.Input.ElementAtOrDefault(0) as LuaString;
+                    LuaNumber delay = args.Input.ElementAtOrDefault(1) as LuaNumber;
 
-                    if (delay != null)
+                    if (callback != null && delay != null)
                     {
                         System.Timers.Timer timer = new System.Timers.Timer(delay.Value);
                         timer.Elapsed += new ElapsedEventHandler(delegate(object sender, ElapsedEventArgs e)
                         {
-                            lua.Execute("RSAS.Timer.TriggerCallback('" + callback + "')", Timer.frameworkScriptName);
+                            lua.Execute("RSAS.Timer.TriggerCallback('" + callback.Value + "')", Timer.frameworkScriptName);
                         });
                         timer.Start();
                     }

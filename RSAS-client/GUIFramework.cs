@@ -93,8 +93,8 @@ namespace RSAS.ClientSide
 
         private void ButtonSetText(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
-            LuaString text = args.Input[1] as LuaString;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaString text = args.Input.ElementAtOrDefault(1) as LuaString;
 
             if (controlID == null || text == null || !this.controls.ContainsKey(controlID.Value))
                 return;
@@ -117,8 +117,8 @@ namespace RSAS.ClientSide
 
         private void LabelSetText(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
-            LuaString text = args.Input[1] as LuaString;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaString text = args.Input.ElementAtOrDefault(1) as LuaString;
 
             if (controlID == null || text == null || !this.controls.ContainsKey(controlID.Value))
                 return;
@@ -141,9 +141,9 @@ namespace RSAS.ClientSide
 
         private void ChartCreateSeries(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
-            LuaString seriesName = args.Input[1] as LuaString;
-            LuaString seriesType = args.Input[2] as LuaString;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaString seriesName = args.Input.ElementAtOrDefault(1) as LuaString;
+            LuaString seriesType = args.Input.ElementAtOrDefault(2) as LuaString;
 
             if (controlID == null || seriesName == null || !this.controls.ContainsKey(controlID.Value))
                 return;
@@ -180,9 +180,9 @@ namespace RSAS.ClientSide
 
         private void ChartSetXY(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
-            LuaTable values = args.Input[1] as LuaTable;
-            LuaString seriesName = args.Input[2] as LuaString;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaTable values = args.Input.ElementAtOrDefault(1) as LuaTable;
+            LuaString seriesName = args.Input.ElementAtOrDefault(2) as LuaString;
 
             if (values == null || controlID == null || seriesName == null || !this.controls.ContainsKey(controlID.Value))
                 return;
@@ -246,7 +246,7 @@ namespace RSAS.ClientSide
 
         private void ControlGetParent(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
 
             if (controlID == null || !this.controls.ContainsKey(controlID.Value))
                 return;
@@ -259,7 +259,7 @@ namespace RSAS.ClientSide
 
         private void ControlGetSize(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
 
             if (controlID == null || !this.controls.ContainsKey(controlID.Value))
                 return;
@@ -270,7 +270,7 @@ namespace RSAS.ClientSide
 
         private void ControlGetLocation(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
 
             if (controlID == null || !this.controls.ContainsKey(controlID.Value))
                 return;
@@ -281,9 +281,9 @@ namespace RSAS.ClientSide
 
         private void ControlSetSize(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
-            LuaNumber width = args.Input[1] as LuaNumber;
-            LuaNumber height = args.Input[2] as LuaNumber;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaNumber width = args.Input.ElementAtOrDefault(1) as LuaNumber;
+            LuaNumber height = args.Input.ElementAtOrDefault(2) as LuaNumber;
 
             if (controlID == null || !this.controls.ContainsKey(controlID.Value))
                 return;
@@ -314,9 +314,9 @@ namespace RSAS.ClientSide
 
         private void ControlSetLocation(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
-            LuaNumber x = args.Input[1] as LuaNumber;
-            LuaNumber y = args.Input[2] as LuaNumber;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaNumber x = args.Input.ElementAtOrDefault(1) as LuaNumber;
+            LuaNumber y = args.Input.ElementAtOrDefault(2) as LuaNumber;
 
             if (controlID == null || !this.controls.ContainsKey(controlID.Value))
                 return;
@@ -347,7 +347,7 @@ namespace RSAS.ClientSide
 
         private void ControlRemove(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
 
             if (controlID == null || !this.controls.ContainsKey(controlID.Value))
             {
@@ -375,8 +375,8 @@ namespace RSAS.ClientSide
 
         private void ControlSetParent(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[0] as LuaString;
-            LuaString parentControlID = args.Input[1] as LuaString;
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaString parentControlID = args.Input.ElementAtOrDefault(1) as LuaString;
 
             if (controlID == null || parentControlID == null || !this.controls.ContainsKey(controlID.Value) || !this.controls.ContainsKey(parentControlID.Value))
                 return;
@@ -397,7 +397,7 @@ namespace RSAS.ClientSide
 
         private void CreateControl(LuaManagedFunctionArgs args)
         {
-            LuaString controlID = args.Input[1] as LuaString;
+            LuaString controlID = args.Input.ElementAtOrDefault(1) as LuaString;
 
             //return if no unique control ID is specified
             if (controlID == null)
@@ -408,7 +408,7 @@ namespace RSAS.ClientSide
             ControlType type;
             try
             {
-                type = (ControlType)Enum.Parse(typeof(ControlType), args.Input[0].ToString(), true);
+                type = (ControlType)Enum.Parse(typeof(ControlType), args.Input.ElementAtOrDefault(0).ToString(), true);
 
                 ControlWork work = delegate()
                 {
