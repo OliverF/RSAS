@@ -171,10 +171,14 @@ namespace RSAS.ClientSide
                         ObservableCollection<Connection> connections = new ObservableCollection<Connection>();
                         connections.Add(con);
 
-                        Plugins.Frameworks.Timer framework = new Plugins.Frameworks.Timer();
-                        framework.MergeWith(new GUIFramework(this.primaryDisplayPanel));
-                        framework.MergeWith(new Plugins.Frameworks.Base());
-                        framework.MergeWith(new Plugins.Frameworks.Networking(connections));
+                        Plugins.Frameworks.Base baseFramework = new Plugins.Frameworks.Base();
+                        baseFramework.MessagePrinted += new Plugins.Frameworks.BaseMessagePrintedEventHandler(delegate(object sender, Plugins.Frameworks.BaseMessagePrintedEventArgs e)
+                        {
+                            LogConsoleMessage(Settings.LogMessageType.Information, e.Message);
+                        });
+                        baseFramework.MergeWith(new GUIFramework(this.primaryDisplayPanel));
+                        baseFramework.MergeWith(new Plugins.Frameworks.Timer());
+                        baseFramework.MergeWith(new Plugins.Frameworks.Networking(connections));
 
                         Plugins.PluginLoader pluginLoader = new Plugins.PluginLoader();
 
@@ -183,7 +187,7 @@ namespace RSAS.ClientSide
                             LogConsoleMessage(Settings.LogMessageType.Warning, Settings.BuildLuaErrorMessage(e.Source, e.Line.ToString(), e.Message));
                         });
 
-                        pluginLoader.LoadPlugins(Settings.PLUGINPATH, Settings.ENTRYSCRIPTNAME, framework);
+                        pluginLoader.LoadPlugins(Settings.PLUGINPATH, Settings.ENTRYSCRIPTNAME, baseFramework);
 
                         nodes.Add(new Node(serverName, con, username, password, pluginLoader));
 

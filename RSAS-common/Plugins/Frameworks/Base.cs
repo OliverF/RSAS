@@ -10,9 +10,13 @@ using RSAS.Networking;
 
 namespace RSAS.Plugins.Frameworks
 {
+    public delegate void BaseMessagePrintedEventHandler(object sender, BaseMessagePrintedEventArgs e);
+
     public class Base : PluginFramework
     {
         static string frameworkScriptName = "base.lua";
+
+        public event BaseMessagePrintedEventHandler MessagePrinted;
 
         public Base()
         {
@@ -27,12 +31,16 @@ namespace RSAS.Plugins.Frameworks
                     LuaTable tbl = a as LuaTable;
 
                     if (tbl == null)
-                        Console.WriteLine(a);
+                        PrintMessage(a.ToString());
                     else
+                    {
+                        string message = "";
                         LuaUtilities.RecurseLuaTable(tbl, delegate(List<LuaValueType> path, LuaValueType key, LuaType value)
                         {
-                            Console.WriteLine(LuaUtilities.GenerateTablePath(path) + LuaTablePath.TablePathSeparator + key + ": " + value);
+                            message += LuaUtilities.GenerateTablePath(path) + LuaTablePath.TablePathSeparator + key + ": " + value + Environment.NewLine;
                         });
+                        PrintMessage(message);
+                    }
                 });
 
                 lua.RegisterGlobalFunction("_RSAS_Execute", delegate(LuaManagedFunctionArgs args)
@@ -61,6 +69,12 @@ namespace RSAS.Plugins.Frameworks
                     }
                 });
             });
+        }
+
+        void PrintMessage(string message)
+        {
+            if (MessagePrinted != null)
+                MessagePrinted(this, new BaseMessagePrintedEventArgs(message));
         }
     }
 }
