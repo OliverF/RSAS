@@ -25,6 +25,7 @@ namespace RSAS.Plugins
             lua.LoadStandardLibrary(LuaStandardLibrary.Base);
             lua.LoadStandardLibrary(LuaStandardLibrary.Table);
             lua.LoadStandardLibrary(LuaStandardLibrary.Math);
+            lua.LoadStandardLibrary(LuaStandardLibrary.String);
 
             if (framework != null)
                 framework.InjectInto(safeLua);
