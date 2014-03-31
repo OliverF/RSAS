@@ -8,8 +8,6 @@ namespace RSAS.ClientSide
 {
     class Settings
     {
-        public enum LogMessageType { Information, Warning, Error };
-
         public static string ENTRYSCRIPTNAME = "cl_entry.lua";
         public static string PLUGINPATH = "plugins";
         public static string APPDATAPATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RSAS");

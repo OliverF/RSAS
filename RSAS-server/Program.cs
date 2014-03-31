@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using RSAS.Networking;
 using RSAS.Networking.Messages;
+using RSAS.Logging;
 
 namespace RSAS.ServerSide
 {
@@ -14,8 +15,17 @@ namespace RSAS.ServerSide
     {
         static void Main(string[] args)
         {
-            //basic test
-            UserAuthenticator.LoadCredentials();
+            TextLogger.MessageLogged += new TextLoggerMessageLoggedEventHandler(TextLogger_MessageLogged);
+
+            try
+            {
+                UserAuthenticator.LoadCredentials(Settings.USERPATH);
+            }
+            catch (Exception e)
+            {
+                //No specific error handling can be performed, log the error
+                TextLogger.TimestampedLog(LogType.Error, e.ToString());
+            }
 
             IPAddress ip = IPAddress.Any;
             Server server = new Server(new System.Net.IPEndPoint(ip, 7070));
@@ -28,6 +38,11 @@ namespace RSAS.ServerSide
 
             server.Stop();
 
+        }
+
+        static void TextLogger_MessageLogged(object sender, TextLoggerMessageLoggedEventArgs e)
+        {
+            Console.WriteLine(e.Message);
         }
     }
 }

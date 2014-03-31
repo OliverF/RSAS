@@ -16,6 +16,7 @@ using RSAS.Networking;
 using RSAS.Networking.Messages;
 using RSAS.Utilities;
 using RSAS.Plugins;
+using RSAS.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -31,6 +32,20 @@ namespace RSAS.ClientSide
         {
             InitializeComponent();
             LoadServers();
+            TextLogger.MessageLogged += new TextLoggerMessageLoggedEventHandler(TextLogger_MessageLogged);
+        }
+
+        void TextLogger_MessageLogged(object sender, TextLoggerMessageLoggedEventArgs e)
+        {
+            ControlWork work = delegate()
+            {
+                this.consoleLogTextBox.AppendText(e.Message);
+            };
+
+            if (this.consoleLogTextBox.InvokeRequired)
+                this.consoleLogTextBox.Invoke(work);
+            else
+                work();
         }
 
         private void addServerToolStripMenuItem_Click(object sender, EventArgs e)
@@ -110,7 +125,7 @@ namespace RSAS.ClientSide
                 }
                 catch(JsonReaderException)
                 {
-                    LogConsoleMessage(Settings.LogMessageType.Error, Settings.BuildServerLoadError());
+                    TextLogger.TimestampedLog(LogType.Error, Settings.BuildServerLoadError());
                     return;
                 }
 
@@ -139,13 +154,13 @@ namespace RSAS.ClientSide
                             }
                             catch (SocketException)
                             {
-                                LogConsoleMessage(Settings.LogMessageType.Warning, Settings.BuildConnectionErrorMessage(serverName, node.Name));
+                                TextLogger.TimestampedLog(LogType.Warning, Settings.BuildConnectionErrorMessage(serverName, node.Name));
                             }
                         }
                         catch (Exception)
                         {
                             //No specific error handling can be made here
-                            LogConsoleMessage(Settings.LogMessageType.Error, Settings.BuildServerLoadError());
+                            TextLogger.TimestampedLog(LogType.Error, Settings.BuildServerLoadError());
                             return;
                         }
                     });
@@ -174,7 +189,7 @@ namespace RSAS.ClientSide
                         Plugins.Frameworks.Base baseFramework = new Plugins.Frameworks.Base();
                         baseFramework.MessagePrinted += new Plugins.Frameworks.BaseMessagePrintedEventHandler(delegate(object sender, Plugins.Frameworks.BaseMessagePrintedEventArgs e)
                         {
-                            LogConsoleMessage(Settings.LogMessageType.Information, e.Message);
+                            TextLogger.TimestampedLog(LogType.Information, e.Message);
                         });
                         baseFramework.MergeWith(new GUIFramework(this.primaryDisplayPanel));
                         baseFramework.MergeWith(new Plugins.Frameworks.Timer());
@@ -184,7 +199,7 @@ namespace RSAS.ClientSide
 
                         pluginLoader.ThreadSafeLua.ExecutionError += new ThreadSafeLuaErrorEventHandler(delegate(object sender, ThreadSafeLuaExecutionErrorEventArgs e)
                         {
-                            LogConsoleMessage(Settings.LogMessageType.Warning, Settings.BuildLuaErrorMessage(e.Source, e.Line.ToString(), e.Message));
+                            TextLogger.TimestampedLog(LogType.Warning, Settings.BuildLuaErrorMessage(e.Source, e.Line.ToString(), e.Message));
                         });
 
                         pluginLoader.LoadPlugins(Settings.PLUGINPATH, Settings.ENTRYSCRIPTNAME, baseFramework);
@@ -195,25 +210,10 @@ namespace RSAS.ClientSide
                     }
                     else
                     {
-                        LogConsoleMessage(Settings.LogMessageType.Warning, Settings.BuildBadCredentialsMessage(serverName));
+                        TextLogger.TimestampedLog(LogType.Warning, Settings.BuildBadCredentialsMessage(serverName));
                     }
                 }
             });
-        }
-
-        void LogConsoleMessage(Settings.LogMessageType type, string message)
-        {
-            string logMessage = "[" + type.ToString() + "] " + message + " " + System.DateTime.Now.ToString("H:m:s dd/MM/yyyy") + Environment.NewLine;
-
-            ControlWork work = delegate()
-            {
-                this.consoleLogTextBox.AppendText(logMessage);
-            };
-
-            if (this.consoleLogTextBox.InvokeRequired)
-                this.consoleLogTextBox.Invoke(work);
-            else
-                work();
         }
 
         private void showLogConsoleToolStripMenuItem_Click(object sender, EventArgs e)

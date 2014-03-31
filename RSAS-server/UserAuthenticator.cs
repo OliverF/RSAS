@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using RSAS.Networking;
 using RSAS.Networking.Messages;
 using RSAS.Utilities;
@@ -14,11 +15,29 @@ namespace RSAS.ServerSide
         static List<Connection> unauthenticatedConnections = new List<Connection>();
         static Dictionary<string, User> users = new Dictionary<string, User>();
 
-        public static void LoadCredentials()
+        public static void LoadCredentials(string userDirectory)
         {
-            //hashedUserCredentials.Add("username", SecurityUtilities.MD5Hash("password"));
-            User testUser = User.CreateFromUsername("username", SecurityUtilities.MD5Hash("password"));
-            users.Add("username", testUser);
+            if (Directory.Exists(userDirectory))
+            {
+                foreach (string usernamePath in Directory.GetDirectories(userDirectory))
+                {
+                    string username = Path.GetFileName(usernamePath);
+                    string pathToUserPasswordHash = Settings.BuildUserCredentialsFilePath(username);
+                    if (File.Exists(pathToUserPasswordHash))
+                    {
+                        string hash = File.ReadAllText(pathToUserPasswordHash);
+                        User user = new User(username, hash);
+                    }
+                    else
+                    {
+                        throw new FileNotFoundException("The file '" + Settings.USERCREDENTIALSFILENAME + "' was not found for the user '" + username + "'");
+                    }
+                }
+            }
+            else
+            {
+                throw new DirectoryNotFoundException("The directory containing user definitions was not found. Ensure the 'users' directory exists at " + Settings.USERPATH);
+            }
         }
 
         static bool CheckCredentials(string username, string hashedPassword)

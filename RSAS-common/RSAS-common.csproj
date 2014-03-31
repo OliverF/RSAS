@@ -47,6 +47,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Logging\TextLogger.cs" />
+    <Compile Include="Logging\TextLoggerMessageLoggedEventArgs.cs" />
     <Compile Include="Networking\Client.cs" />
     <Compile Include="Networking\Connection.cs" />
     <Compile Include="Networking\ConnectionMessageReceivedEventArgs.cs" />
