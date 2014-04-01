@@ -31,21 +31,19 @@ namespace RSAS.ClientSide
         public MainForm()
         {
             InitializeComponent();
-            LoadServers();
-            TextLogger.MessageLogged += new TextLoggerMessageLoggedEventHandler(TextLogger_MessageLogged);
-        }
-
-        void TextLogger_MessageLogged(object sender, TextLoggerMessageLoggedEventArgs e)
-        {
-            ControlWork work = delegate()
+            LoadNodes();
+            TextLogger.MessageLogged += new TextLoggerMessageLoggedEventHandler(delegate(object sender, TextLoggerMessageLoggedEventArgs e)
             {
-                this.consoleLogTextBox.AppendText(e.Message);
-            };
+                ControlWork work = delegate()
+                {
+                    this.consoleLogTextBox.AppendText(e.Message);
+                };
 
-            if (this.consoleLogTextBox.InvokeRequired)
-                this.consoleLogTextBox.Invoke(work);
-            else
-                work();
+                if (this.consoleLogTextBox.InvokeRequired)
+                    this.consoleLogTextBox.Invoke(work);
+                else
+                    work();
+            });
         }
 
         private void showLogConsoleToolStripMenuItem_Click(object sender, EventArgs e)
@@ -71,26 +69,29 @@ namespace RSAS.ClientSide
                 return;
             }
 
-            TcpClient client;
             try
             {
-                client = new TcpClient(e.HostAddress.ToString(), e.HostPort);
+                AddNode(e.HostAddress, e.HostPort, e.ServerName, e.Username, e.Password);
             }
-            catch (SocketException)
+            catch (ServerUnreachableException unreachableException)
             {
-                string errorMessage = "Connection error: Could not connect to " + remoteHost + ".";
-                DialogResult result = MessageBox.Show(errorMessage, "Connection error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                DialogResult result = MessageBox.Show(unreachableException.Message, "Connection error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                if (result == DialogResult.Cancel)
+                    (sender as AddServerForm).Close();
+                return;
+            }
+            catch (ServerBadCredentialsException badCredentialsException)
+            {
+                DialogResult result = MessageBox.Show(badCredentialsException.Message, "Connection error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
                 if (result == DialogResult.Cancel)
                     (sender as AddServerForm).Close();
                 return;
             }
 
-            SetupNodeConnection(client, e.ServerName, e.Username, e.Password);
-
             (sender as AddServerForm).Close();
         }
 
-        void SaveServers()
+        void SaveNodes()
         {
             if (!Directory.Exists(Directory.GetParent(Settings.SERVERDATAPATH).FullName))
                 Directory.CreateDirectory(Directory.GetParent(Settings.SERVERDATAPATH).FullName);
@@ -113,7 +114,7 @@ namespace RSAS.ClientSide
             sw.Close();
         }
 
-        void LoadServers()
+        void LoadNodes()
         {
             if (File.Exists(Settings.SERVERDATAPATH))
             {
@@ -152,7 +153,7 @@ namespace RSAS.ClientSide
                             try
                             {
                                 client = new TcpClient(remoteEndPoint[0], int.Parse(remoteEndPoint[1]));
-                                SetupNodeConnection(client, serverName, username, password);
+                                AddNode(IPAddress.Parse(remoteEndPoint[0]), int.Parse(remoteEndPoint[1]), serverName, username, password);
                             }
                             catch (SocketException)
                             {
@@ -179,8 +180,97 @@ namespace RSAS.ClientSide
             return false;
         }
 
-        void SetupNodeConnection(TcpClient client, string serverName, string username, string password)
+        void AddNode(IPAddress hostAddress, int hostPort, string name, string username, string password)
         {
+            string remoteHost = hostAddress.ToString() + ":" + hostPort.ToString();
+            TcpClient client;
+            try
+            {
+                client = new TcpClient(hostAddress.ToString(), hostPort);
+            }
+            catch (SocketException e)
+            {
+                throw new ServerUnreachableException("Connection error: Could not connect to " + remoteHost + ".", e);
+            }
+
+            Connection con;
+            try
+            {
+                con = SetupNodeConnection(client, name, username, password);
+            }
+            catch (ServerBadCredentialsException)
+            {
+                //cannot handle here, throw higher
+                throw;
+            }
+
+            PluginLoader pluginLoader = SetupNodePluginLoader(con, this.primaryDisplayPanel);
+
+            Node node = new Node(name, con, username, password, pluginLoader);
+            nodes.Add(node);
+
+            ControlWork work = delegate()
+            {
+                serversToolStripMenuItem.DropDownItems.Add(SetupNodeMenuItem(node));
+            };
+
+            if (this.InvokeRequired)
+                this.Invoke(work);
+            else
+                work();
+
+            SaveNodes();
+        }
+
+        void RemoveNode(Node node, ToolStripMenuItem nodeMenuItem)
+        {
+            //remove this server from the list
+            nodeMenuItem.OwnerItem.Owner = null;
+            node.Connection.Disconnect();
+            nodes.Remove(node);
+            SaveNodes();
+        }
+
+        PluginLoader SetupNodePluginLoader(Connection networkingFrameworkConnection, Control guiFrameworkParent)
+        {
+            ObservableCollection<Connection> connections = new ObservableCollection<Connection>();
+            connections.Add(networkingFrameworkConnection);
+
+            Plugins.Frameworks.Base baseFramework = new Plugins.Frameworks.Base();
+            baseFramework.MessagePrinted += new Plugins.Frameworks.BaseMessagePrintedEventHandler(delegate(object sender, Plugins.Frameworks.BaseMessagePrintedEventArgs e)
+            {
+                TextLogger.TimestampedLog(LogType.Information, e.Message);
+            });
+            baseFramework.MergeWith(new GUIFramework(guiFrameworkParent));
+            baseFramework.MergeWith(new Plugins.Frameworks.Timer());
+            baseFramework.MergeWith(new Plugins.Frameworks.Networking(connections));
+
+            Plugins.PluginLoader pluginLoader = new Plugins.PluginLoader();
+
+            pluginLoader.ThreadSafeLua.ExecutionError += new ThreadSafeLuaErrorEventHandler(delegate(object sender, ThreadSafeLuaExecutionErrorEventArgs e)
+            {
+                TextLogger.TimestampedLog(LogType.Warning, Settings.BuildLuaErrorMessage(e.Source, e.Line.ToString(), e.Message));
+            });
+
+            pluginLoader.LoadPlugins(Settings.PLUGINPATH, Settings.ENTRYSCRIPTNAME, baseFramework);
+
+            return pluginLoader;
+        }
+
+        Connection SetupNodeConnection(TcpClient client, string serverName, string username, string password)
+        {
+            bool timedOut = false;
+            bool authed = false;
+            bool authFail = false;
+            System.Timers.Timer authTimeout = new System.Timers.Timer();
+            authTimeout.Interval = 5000;
+            authTimeout.Elapsed += new System.Timers.ElapsedEventHandler(delegate(object sender, System.Timers.ElapsedEventArgs e)
+            {
+                timedOut = true;
+                authTimeout.Stop();
+            });
+            authTimeout.Start();
+
             Connection con = new Connection(client);
             con.MessageReceived += new ConnectionMessageReceivedEventHandler(delegate(object connectionSender, ConnectionMessageReceivedEventArgs connectionMessageArgs)
             {
@@ -190,61 +280,25 @@ namespace RSAS.ClientSide
                 }
                 else if (connectionMessageArgs.Message.GetType() == typeof(AuthenticationResult))
                 {
+                    authTimeout.Stop();
                     AuthenticationResult authenticationResult = connectionMessageArgs.Message as AuthenticationResult;
-                    if (authenticationResult.AuthenticationAccepted)
-                    {
-                        ObservableCollection<Connection> connections = new ObservableCollection<Connection>();
-                        connections.Add(con);
-
-                        Plugins.Frameworks.Base baseFramework = new Plugins.Frameworks.Base();
-                        baseFramework.MessagePrinted += new Plugins.Frameworks.BaseMessagePrintedEventHandler(delegate(object sender, Plugins.Frameworks.BaseMessagePrintedEventArgs e)
-                        {
-                            TextLogger.TimestampedLog(LogType.Information, e.Message);
-                        });
-                        baseFramework.MergeWith(new GUIFramework(this.primaryDisplayPanel));
-                        baseFramework.MergeWith(new Plugins.Frameworks.Timer());
-                        baseFramework.MergeWith(new Plugins.Frameworks.Networking(connections));
-
-                        Plugins.PluginLoader pluginLoader = new Plugins.PluginLoader();
-
-                        pluginLoader.ThreadSafeLua.ExecutionError += new ThreadSafeLuaErrorEventHandler(delegate(object sender, ThreadSafeLuaExecutionErrorEventArgs e)
-                        {
-                            TextLogger.TimestampedLog(LogType.Warning, Settings.BuildLuaErrorMessage(e.Source, e.Line.ToString(), e.Message));
-                        });
-
-                        pluginLoader.LoadPlugins(Settings.PLUGINPATH, Settings.ENTRYSCRIPTNAME, baseFramework);
-
-                        Node node = new Node(serverName, con, username, password, pluginLoader);
-
-                        nodes.Add(node);
-
-                        ControlWork work = delegate()
-                        {
-                            serversToolStripMenuItem.DropDownItems.Add(CreateNodeMenuItem(node));
-                        };
-
-                        if (this.InvokeRequired)
-                            this.Invoke(work);
-                        else
-                            work();
-
-                        SaveServers();
-                    }
-                    else
-                    {
-                        TextLogger.TimestampedLog(LogType.Warning, Settings.BuildBadCredentialsMessage(serverName));
-                    }
+                    authed = authenticationResult.AuthenticationAccepted;
+                    authFail = !authed;
                 }
             });
+
+            //wait for the auth result
+            while (!timedOut)
+                if (authed)
+                    return con;
+                else if (authFail)
+                    throw new ServerBadCredentialsException("'" + serverName + "' rejected credentials.");
+
+            //throw exception in the event of a timeout
+            throw new ServerUnreachableException("Connection error: Could not authenticate to " + serverName + ".");
         }
 
-        void DestroyNodeConnection(Node node)
-        {
-            node.Connection.Disconnect();
-            nodes.Remove(node);
-        }
-
-        ToolStripMenuItem CreateNodeMenuItem(Node node)
+        ToolStripMenuItem SetupNodeMenuItem(Node node)
         {
             ToolStripMenuItem nodeMenuItem = new ToolStripMenuItem(node.Name);
             nodeMenuItem.Tag = node;
@@ -272,9 +326,7 @@ namespace RSAS.ClientSide
             AddServerForm addServerForm = new AddServerForm(node.Name, endPoint[0], endPoint[1], node.Username, node.Password);
             addServerForm.DetailsSubmitted += new AddServerForm.AddServerFormDetailsSubmittedEventHandler(delegate(object addServerSender, AddServerFormDetailsSubmittedEventArgs addServerArgs)
             {
-                DestroyNodeConnection(node);
-                //remove this server from the list
-                item.OwnerItem.Owner = null;
+                RemoveNode(node, item);
                 //handle as usual
                 addServerForm_DetailsSubmitted(addServerSender, addServerArgs);
             });
@@ -291,10 +343,7 @@ namespace RSAS.ClientSide
                 MessageBoxIcon.Warning);
             if (result == System.Windows.Forms.DialogResult.OK)
             {
-                //remove this server from the list
-                item.OwnerItem.Owner = null;
-                DestroyNodeConnection(node);
-                SaveServers();
+                RemoveNode(node, item);
             }
         }
     }

@@ -66,6 +66,7 @@
       <DependentUpon>AddServerForm.cs</DependentUpon>
     </Compile>
     <Compile Include="AddServerFormDetailsSubmittedEventArgs.cs" />
+    <Compile Include="ServerBadCredentialsException.cs" />
     <Compile Include="GUIFramework.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
@@ -79,6 +80,7 @@
     <Compile Include="ResizableContainer.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="ServerUnreachableException.cs" />
     <Compile Include="Settings.cs" />
     <EmbeddedResource Include="AddServerForm.resx">
       <DependentUpon>AddServerForm.cs</DependentUpon>
