@@ -48,6 +48,11 @@ namespace RSAS.ClientSide
                 work();
         }
 
+        private void showLogConsoleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.splitContainer.Panel2Collapsed = !showLogConsoleToolStripMenuItem.Checked;
+        }
+
         private void addServerToolStripMenuItem_Click(object sender, EventArgs e)
         {
             AddServerForm addServerForm = new AddServerForm();
@@ -58,15 +63,12 @@ namespace RSAS.ClientSide
         void addServerForm_DetailsSubmitted(object sender, AddServerFormDetailsSubmittedEventArgs e)
         {
             string remoteHost = e.HostAddress + ":" + e.HostPort.ToString();
-            foreach (Node node in nodes)
+            if (ServerAlreadyDefined(remoteHost))
             {
-                if (node.Connection.RemoteEndPoint.ToString() == remoteHost)
-                {
-                    DialogResult result = MessageBox.Show("A server has already been defined with the same address.", "Input error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
-                    if (result == DialogResult.Cancel)
-                        (sender as AddServerForm).Close();
-                    return;
-                }
+                DialogResult result = MessageBox.Show("A server has already been defined with the same address.", "Input error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                if (result == DialogResult.Cancel)
+                    (sender as AddServerForm).Close();
+                return;
             }
 
             TcpClient client;
@@ -169,6 +171,14 @@ namespace RSAS.ClientSide
             }
         }
 
+        bool ServerAlreadyDefined(string remoteEndPoint)
+        {
+            foreach (Node node in nodes)
+                if (node.Connection.RemoteEndPoint == remoteEndPoint)
+                    return true;
+            return false;
+        }
+
         void SetupNodeConnection(TcpClient client, string serverName, string username, string password)
         {
             Connection con = new Connection(client);
@@ -204,7 +214,19 @@ namespace RSAS.ClientSide
 
                         pluginLoader.LoadPlugins(Settings.PLUGINPATH, Settings.ENTRYSCRIPTNAME, baseFramework);
 
-                        nodes.Add(new Node(serverName, con, username, password, pluginLoader));
+                        Node node = new Node(serverName, con, username, password, pluginLoader);
+
+                        nodes.Add(node);
+
+                        ControlWork work = delegate()
+                        {
+                            serversToolStripMenuItem.DropDownItems.Add(CreateNodeMenuItem(node));
+                        };
+
+                        if (this.InvokeRequired)
+                            this.Invoke(work);
+                        else
+                            work();
 
                         SaveServers();
                     }
@@ -216,9 +238,64 @@ namespace RSAS.ClientSide
             });
         }
 
-        private void showLogConsoleToolStripMenuItem_Click(object sender, EventArgs e)
+        void DestroyNodeConnection(Node node)
         {
-            this.splitContainer.Panel2Collapsed = !showLogConsoleToolStripMenuItem.Checked;
+            node.Connection.Disconnect();
+            nodes.Remove(node);
+        }
+
+        ToolStripMenuItem CreateNodeMenuItem(Node node)
+        {
+            ToolStripMenuItem nodeMenuItem = new ToolStripMenuItem(node.Name);
+            nodeMenuItem.Tag = node;
+
+            ToolStripMenuItem nodeEditMenuItem = new ToolStripMenuItem("Edit...");
+            nodeEditMenuItem.Tag = node;
+            nodeEditMenuItem.Click += new EventHandler(nodeEditMenuItem_Click);
+
+            ToolStripMenuItem nodeDeleteMenuItem = new ToolStripMenuItem("Delete...");
+            nodeDeleteMenuItem.Tag = node;
+            nodeDeleteMenuItem.Click += new EventHandler(nodeDeleteMenuItem_Click);
+
+            nodeMenuItem.DropDownItems.AddRange(new ToolStripItem[] { nodeEditMenuItem, nodeDeleteMenuItem });
+
+            return nodeMenuItem;
+        }
+
+        void nodeEditMenuItem_Click(object sender, EventArgs e)
+        {
+            ToolStripMenuItem item = sender as ToolStripMenuItem;
+            Node node = item.Tag as Node;
+
+            string[] endPoint = node.Connection.RemoteEndPoint.Split(':');
+
+            AddServerForm addServerForm = new AddServerForm(node.Name, endPoint[0], endPoint[1], node.Username, node.Password);
+            addServerForm.DetailsSubmitted += new AddServerForm.AddServerFormDetailsSubmittedEventHandler(delegate(object addServerSender, AddServerFormDetailsSubmittedEventArgs addServerArgs)
+            {
+                DestroyNodeConnection(node);
+                //remove this server from the list
+                item.OwnerItem.Owner = null;
+                //handle as usual
+                addServerForm_DetailsSubmitted(addServerSender, addServerArgs);
+            });
+            addServerForm.Show();
+        }
+
+        void nodeDeleteMenuItem_Click(object sender, EventArgs e)
+        {
+            ToolStripMenuItem item = sender as ToolStripMenuItem;
+            Node node = item.Tag as Node;
+            DialogResult result = MessageBox.Show("You are about to delete a server configuration. The connection will be terminated (if connected) and any data associated will be deleted.",
+                "Delete Server",
+                MessageBoxButtons.OKCancel,
+                MessageBoxIcon.Warning);
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                //remove this server from the list
+                item.OwnerItem.Owner = null;
+                DestroyNodeConnection(node);
+                SaveServers();
+            }
         }
     }
 }

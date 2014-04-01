@@ -27,6 +27,7 @@ namespace RSAS.ServerSide
                     {
                         string hash = File.ReadAllText(pathToUserPasswordHash);
                         User user = new User(username, hash);
+                        users.Add(username, user);
                     }
                     else
                     {

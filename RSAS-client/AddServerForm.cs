@@ -38,6 +38,18 @@ namespace RSAS.ClientSide
             this.passwordTextBox.Validating += new CancelEventHandler(passwordTextBox_Validating);
         }
 
+        public AddServerForm(string name, string hostAddress, string hostPort, string username, string password):this()
+        {
+            this.serverNameTextBox.Text = name;
+            this.hostAddressTextBox.Text = hostAddress;
+            this.hostPortTextBox.Text = hostPort;
+            this.usernameTextBox.Text = username;
+            this.passwordTextBox.Text = password;
+
+            //force the validation of the textboxes
+            this.ValidateChildren();
+        }
+
         void passwordTextBox_Validating(object sender, CancelEventArgs e)
         {
             if (passwordTextBox.Text.Length != 0)
@@ -115,7 +127,7 @@ namespace RSAS.ClientSide
 
         private void addServerButton_Click(object sender, EventArgs e)
         {
-            if (serverNameValid && hostAddressValid && hostPortValid && usernameValid && passwordValid)
+            if (serverNameValid && hostAddressValid && hostPortValid && usernameValid && passwordValid && DetailsSubmitted != null)
             {
                 DetailsSubmitted(this, new AddServerFormDetailsSubmittedEventArgs(
                     this.serverNameTextBox.Text,

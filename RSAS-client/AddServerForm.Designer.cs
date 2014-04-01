@@ -77,7 +77,7 @@
             this.addServerButton.Name = "addServerButton";
             this.addServerButton.Size = new System.Drawing.Size(75, 23);
             this.addServerButton.TabIndex = 6;
-            this.addServerButton.Text = "Add";
+            this.addServerButton.Text = "Submit";
             this.addServerButton.UseVisualStyleBackColor = true;
             this.addServerButton.Click += new System.EventHandler(this.addServerButton_Click);
             // 
@@ -161,7 +161,7 @@
             this.Controls.Add(this.hostPortTextBox);
             this.Controls.Add(this.hostAddressTextBox);
             this.Name = "AddServerForm";
-            this.Text = "Add New Server";
+            this.Text = "Server Details";
             this.ResumeLayout(false);
             this.PerformLayout();
 
