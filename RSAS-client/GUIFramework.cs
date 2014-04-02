@@ -49,6 +49,7 @@ namespace RSAS.ClientSide
                 lua.RegisterGlobalFunction("_RSAS_GUI_Control_GetSize", this.ControlGetSize);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Chart_SetXY", this.ChartSetXY);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Chart_CreateSeries", this.ChartCreateSeries);
+                lua.RegisterGlobalFunction("_RSAS_GUI_Chart_SetAxesLimits", this.ChartSetAxesLimits);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Label_SetText", this.LabelSetText);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Button_SetText", this.ButtonSetText);
             });
@@ -240,6 +241,43 @@ namespace RSAS.ClientSide
             {
                 chart.Invoke(work);
             }
+            else
+                work();
+        }
+
+        private void ChartSetAxesLimits(LuaManagedFunctionArgs args)
+        {
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaNumber xAxisMin = args.Input.ElementAtOrDefault(1) as LuaNumber;
+            LuaNumber xAxisMax = args.Input.ElementAtOrDefault(2) as LuaNumber;
+            LuaNumber yAxisMin = args.Input.ElementAtOrDefault(3) as LuaNumber;
+            LuaNumber yAxisMax = args.Input.ElementAtOrDefault(4) as LuaNumber;
+
+            if (controlID == null || !this.controls.ContainsKey(controlID.Value))
+                return;
+
+            Chart chart = this.controls[controlID.Value] as Chart;
+
+            if (chart == null)
+                return;
+
+            ControlWork work = delegate()
+            {
+                if (xAxisMin != null)
+                    chart.ChartAreas[0].AxisX.Minimum = xAxisMin.Value;
+
+                if (xAxisMax != null)
+                    chart.ChartAreas[0].AxisX.Maximum = xAxisMax.Value;
+
+                if (yAxisMin != null)
+                    chart.ChartAreas[0].AxisY.Minimum = yAxisMin.Value;
+
+                if (yAxisMax != null)
+                    chart.ChartAreas[0].AxisY.Maximum = yAxisMax.Value;
+            };
+
+            if (chart.InvokeRequired)
+                chart.Invoke(work);
             else
                 work();
         }

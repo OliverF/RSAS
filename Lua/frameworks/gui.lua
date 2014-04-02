@@ -117,6 +117,10 @@ function Chart:CreateSeries(seriesName, seriesType)
 	_RSAS_GUI_Chart_CreateSeries(self.ControlID, seriesName, seriesType)
 end
 
+function Chart:SetAxesLimits(xAxisMin, xAxisMax, yAxisMin, yAxisMax)
+	_RSAS_GUI_Chart_SetAxesLimits(self.ControlID, xAxisMin, xAxisMax, yAxisMin, yAxisMax)
+end
+
 --give methods from Control to Chart
 setmetatable(Chart, RSAS.GUI.Control)
 
