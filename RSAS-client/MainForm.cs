@@ -244,6 +244,7 @@ namespace RSAS.ClientSide
             baseFramework.MergeWith(new GUIFramework(guiFrameworkParent));
             baseFramework.MergeWith(new Plugins.Frameworks.Timer());
             baseFramework.MergeWith(new Plugins.Frameworks.Networking(connections));
+            baseFramework.MergeWith(new Plugins.Frameworks.IO());
 
             Plugins.PluginLoader pluginLoader = new Plugins.PluginLoader();
 

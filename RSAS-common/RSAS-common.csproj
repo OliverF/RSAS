@@ -60,6 +60,7 @@
     <Compile Include="Networking\ServerClientConnectedEventArgs.cs" />
     <Compile Include="Plugins\Frameworks\Base.cs" />
     <Compile Include="Plugins\Frameworks\BaseMessagePrintedEventArgs.cs" />
+    <Compile Include="Plugins\Frameworks\IO.cs" />
     <Compile Include="Plugins\Frameworks\Networking.cs" />
     <Compile Include="Plugins\Frameworks\Timer.cs" />
     <Compile Include="Plugins\PluginFramework.cs" />
