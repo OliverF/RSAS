@@ -22,11 +22,25 @@ using Newtonsoft.Json.Linq;
 
 namespace RSAS.ClientSide
 {
+
+    struct NodeMetaData
+    {
+        public ToolStripMenuItem MenuItem;
+        public TabPage TabPage;
+
+        public NodeMetaData(ToolStripMenuItem menuItem, TabPage tabPage)
+        {
+            this.MenuItem = menuItem;
+            this.TabPage = tabPage;
+        }
+    }
+
     public partial class MainForm : Form
     {
         delegate void ControlWork();
 
         List<Node> nodes = new List<Node>();
+        Dictionary<Node, NodeMetaData> nodeMetaData = new Dictionary<Node, NodeMetaData>();
 
         public MainForm()
         {
@@ -135,19 +149,20 @@ namespace RSAS.ClientSide
                 foreach (JProperty node in nodes.Children())
                 {
                     //start handling server in new thread to allow GUI thread to continue
-                    Thread t = new Thread(delegate()
+                    Thread t = new Thread(delegate(object assignedNode)
                     {
-                        JObject jNode = node.Value as JObject;
+                        JObject jNodeObject = (assignedNode as JProperty).Value as JObject;
+                        string jNodePropertyKey = (assignedNode as JProperty).Name;
                         List<int> protectedPasswordList = new List<int>();
 
                         try
                         {
-                            byte[] protectedPassword = Array.ConvertAll(jNode["password"].Value<JArray>().ToArray(), token => (byte)int.Parse((token as JValue).Value.ToString()));
+                            byte[] protectedPassword = Array.ConvertAll(jNodeObject["password"].Value<JArray>().ToArray(), token => (byte)int.Parse((token as JValue).Value.ToString()));
                             byte[] passwordBytes = ProtectedData.Unprotect(protectedPassword, null, DataProtectionScope.CurrentUser);
                             string password = Encoding.Unicode.GetString(passwordBytes);
-                            string username = jNode["username"].Value<JValue>().Value.ToString();
-                            string serverName = jNode["name"].Value<JValue>().Value.ToString();
-                            string[] remoteEndPoint = node.Name.Split(':');
+                            string username = jNodeObject["username"].Value<JValue>().Value.ToString();
+                            string serverName = jNodeObject["name"].Value<JValue>().Value.ToString();
+                            string[] remoteEndPoint = jNodePropertyKey.Split(':');
 
                             TcpClient client;
                             try
@@ -157,7 +172,7 @@ namespace RSAS.ClientSide
                             }
                             catch (SocketException)
                             {
-                                TextLogger.TimestampedLog(LogType.Warning, Settings.BuildConnectionErrorMessage(serverName, node.Name));
+                                TextLogger.TimestampedLog(LogType.Warning, Settings.BuildConnectionErrorMessage(serverName, jNodePropertyKey));
                             }
                         }
                         catch (Exception)
@@ -167,7 +182,7 @@ namespace RSAS.ClientSide
                             return;
                         }
                     });
-                    t.Start();
+                    t.Start(node);
                 }
             }
         }
@@ -204,14 +219,21 @@ namespace RSAS.ClientSide
                 throw;
             }
 
-            PluginLoader pluginLoader = SetupNodePluginLoader(con, this.primaryDisplayPanel);
+            TabPage tabPage = new TabPage(name);
+
+            PluginLoader pluginLoader = SetupNodePluginLoader(con, tabPage);
 
             Node node = new Node(name, con, username, password, pluginLoader);
             nodes.Add(node);
 
+            ToolStripMenuItem menuItem = SetupNodeMenuItem(node);
+
+            nodeMetaData.Add(node, new NodeMetaData(menuItem, tabPage));
+
             ControlWork work = delegate()
             {
-                serversToolStripMenuItem.DropDownItems.Add(SetupNodeMenuItem(node));
+                serversToolStripMenuItem.DropDownItems.Add(menuItem);
+                nodeTabControl.TabPages.Add(tabPage);
             };
 
             if (this.InvokeRequired)
@@ -222,12 +244,18 @@ namespace RSAS.ClientSide
             SaveNodes();
         }
 
-        void RemoveNode(Node node, ToolStripMenuItem nodeMenuItem)
+        void RemoveNode(Node node)
         {
-            //remove this server from the list
-            nodeMenuItem.OwnerItem.Owner = null;
+            if (nodeMetaData.ContainsKey(node))
+            {
+                //remove this server from the menu list
+                nodeMetaData[node].MenuItem.Owner = null;
+                //remove the server's tab page
+                nodeTabControl.TabPages.Remove(nodeMetaData[node].TabPage);
+            }
             node.Connection.Disconnect();
             nodes.Remove(node);
+            nodeMetaData.Remove(node);
             SaveNodes();
         }
 
@@ -317,6 +345,12 @@ namespace RSAS.ClientSide
             return nodeMenuItem;
         }
 
+        TabPage SetupNodeTabPage(Node node)
+        {
+            TabPage page = new TabPage(node.Name);
+            return page;
+        }
+
         void nodeEditMenuItem_Click(object sender, EventArgs e)
         {
             ToolStripMenuItem item = sender as ToolStripMenuItem;
@@ -327,7 +361,7 @@ namespace RSAS.ClientSide
             AddServerForm addServerForm = new AddServerForm(node.Name, endPoint[0], endPoint[1], node.Username, node.Password);
             addServerForm.DetailsSubmitted += new AddServerForm.AddServerFormDetailsSubmittedEventHandler(delegate(object addServerSender, AddServerFormDetailsSubmittedEventArgs addServerArgs)
             {
-                RemoveNode(node, item);
+                RemoveNode(node);
                 //handle as usual
                 addServerForm_DetailsSubmitted(addServerSender, addServerArgs);
             });
@@ -344,7 +378,7 @@ namespace RSAS.ClientSide
                 MessageBoxIcon.Warning);
             if (result == System.Windows.Forms.DialogResult.OK)
             {
-                RemoveNode(node, item);
+                RemoveNode(node);
             }
         }
     }

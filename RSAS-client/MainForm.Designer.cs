@@ -32,12 +32,14 @@
             this.serversToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addServerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.serversSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.showLogConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.primaryDisplayPanel = new System.Windows.Forms.Panel();
             this.consoleLogTextBox = new System.Windows.Forms.TextBox();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
-            this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.showLogConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.nodeTabControl = new System.Windows.Forms.TabControl();
             this.menuStrip.SuspendLayout();
+            this.primaryDisplayPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
@@ -76,8 +78,27 @@
             this.serversSeparator.Name = "serversSeparator";
             this.serversSeparator.Size = new System.Drawing.Size(136, 6);
             // 
+            // viewToolStripMenuItem
+            // 
+            this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.showLogConsoleToolStripMenuItem});
+            this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+            this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.viewToolStripMenuItem.Text = "View";
+            // 
+            // showLogConsoleToolStripMenuItem
+            // 
+            this.showLogConsoleToolStripMenuItem.Checked = true;
+            this.showLogConsoleToolStripMenuItem.CheckOnClick = true;
+            this.showLogConsoleToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.showLogConsoleToolStripMenuItem.Name = "showLogConsoleToolStripMenuItem";
+            this.showLogConsoleToolStripMenuItem.Size = new System.Drawing.Size(167, 22);
+            this.showLogConsoleToolStripMenuItem.Text = "Show log console";
+            this.showLogConsoleToolStripMenuItem.Click += new System.EventHandler(this.showLogConsoleToolStripMenuItem_Click);
+            // 
             // primaryDisplayPanel
             // 
+            this.primaryDisplayPanel.Controls.Add(this.nodeTabControl);
             this.primaryDisplayPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.primaryDisplayPanel.Location = new System.Drawing.Point(0, 0);
             this.primaryDisplayPanel.Name = "primaryDisplayPanel";
@@ -113,23 +134,14 @@
             this.splitContainer.SplitterDistance = 306;
             this.splitContainer.TabIndex = 6;
             // 
-            // viewToolStripMenuItem
+            // nodeTabControl
             // 
-            this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.showLogConsoleToolStripMenuItem});
-            this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
-            this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
-            this.viewToolStripMenuItem.Text = "View";
-            // 
-            // showLogConsoleToolStripMenuItem
-            // 
-            this.showLogConsoleToolStripMenuItem.Checked = true;
-            this.showLogConsoleToolStripMenuItem.CheckOnClick = true;
-            this.showLogConsoleToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.showLogConsoleToolStripMenuItem.Name = "showLogConsoleToolStripMenuItem";
-            this.showLogConsoleToolStripMenuItem.Size = new System.Drawing.Size(167, 22);
-            this.showLogConsoleToolStripMenuItem.Text = "Show log console";
-            this.showLogConsoleToolStripMenuItem.Click += new System.EventHandler(this.showLogConsoleToolStripMenuItem_Click);
+            this.nodeTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.nodeTabControl.Location = new System.Drawing.Point(0, 0);
+            this.nodeTabControl.Name = "nodeTabControl";
+            this.nodeTabControl.SelectedIndex = 0;
+            this.nodeTabControl.Size = new System.Drawing.Size(784, 306);
+            this.nodeTabControl.TabIndex = 0;
             // 
             // MainForm
             // 
@@ -143,6 +155,7 @@
             this.Text = "MainForm";
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
+            this.primaryDisplayPanel.ResumeLayout(false);
             this.splitContainer.Panel1.ResumeLayout(false);
             this.splitContainer.Panel2.ResumeLayout(false);
             this.splitContainer.Panel2.PerformLayout();
@@ -164,5 +177,6 @@
         private System.Windows.Forms.SplitContainer splitContainer;
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem showLogConsoleToolStripMenuItem;
+        private System.Windows.Forms.TabControl nodeTabControl;
     }
 }
