@@ -82,25 +82,8 @@ namespace RSAS.ClientSide
                     (sender as AddServerForm).Close();
                 return;
             }
-
-            try
-            {
-                AddNode(e.HostAddress, e.HostPort, e.ServerName, e.Username, e.Password);
-            }
-            catch (ServerUnreachableException unreachableException)
-            {
-                DialogResult result = MessageBox.Show(unreachableException.Message, "Connection error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
-                if (result == DialogResult.Cancel)
-                    (sender as AddServerForm).Close();
-                return;
-            }
-            catch (ServerBadCredentialsException badCredentialsException)
-            {
-                DialogResult result = MessageBox.Show(badCredentialsException.Message, "Connection error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
-                if (result == DialogResult.Cancel)
-                    (sender as AddServerForm).Close();
-                return;
-            }
+            
+            AddNode(e.HostAddress, e.HostPort, e.ServerName, e.Username, e.Password);
 
             (sender as AddServerForm).Close();
         }
@@ -120,7 +103,7 @@ namespace RSAS.ClientSide
                 byte[] protectedPasswordBytes = ProtectedData.Protect(Encoding.Unicode.GetBytes(node.Password), null, DataProtectionScope.CurrentUser);
                 int[] protectedPassword = Array.ConvertAll(protectedPasswordBytes, b => (int)b);
                 jNode.Add("password", new JArray(protectedPassword));
-                root.Add(node.Connection.RemoteEndPoint, jNode);
+                root.Add(node.RemoteEndPoint, jNode);
             }
 
             StreamWriter sw = new StreamWriter(Settings.SERVERDATAPATH);
@@ -164,10 +147,8 @@ namespace RSAS.ClientSide
                             string serverName = jNodeObject["name"].Value<JValue>().Value.ToString();
                             string[] remoteEndPoint = jNodePropertyKey.Split(':');
 
-                            TcpClient client;
                             try
                             {
-                                client = new TcpClient(remoteEndPoint[0], int.Parse(remoteEndPoint[1]));
                                 AddNode(IPAddress.Parse(remoteEndPoint[0]), int.Parse(remoteEndPoint[1]), serverName, username, password);
                             }
                             catch (SocketException)
@@ -190,7 +171,7 @@ namespace RSAS.ClientSide
         bool ServerAlreadyDefined(string remoteEndPoint)
         {
             foreach (Node node in nodes)
-                if (node.Connection.RemoteEndPoint == remoteEndPoint)
+                if (node.RemoteEndPoint == remoteEndPoint)
                     return true;
             return false;
         }
@@ -198,32 +179,34 @@ namespace RSAS.ClientSide
         void AddNode(IPAddress hostAddress, int hostPort, string name, string username, string password)
         {
             string remoteHost = hostAddress.ToString() + ":" + hostPort.ToString();
-            TcpClient client;
+            TcpClient client = new TcpClient();
             try
             {
-                client = new TcpClient(hostAddress.ToString(), hostPort);
+                client.Connect(hostAddress.ToString(), hostPort);
             }
             catch (SocketException e)
             {
-                throw new ServerUnreachableException("Connection error: Could not connect to " + remoteHost + ".", e);
+                TextLogger.TimestampedLog(LogType.Warning, "Connection error: Could not connect to " + remoteHost + " (" + e.Message + ").");
             }
 
-            Connection con;
+            Connection con = null;
             try
             {
-                con = SetupNodeConnection(client, name, username, password);
+                if (client.Connected)
+                {
+                    con = SetupNodeConnection(client, name, username, password);
+                }
             }
-            catch (ServerBadCredentialsException)
+            catch (ServerBadCredentialsException e)
             {
-                //cannot handle here, throw higher
-                throw;
+                TextLogger.TimestampedLog(LogType.Warning, "Connection error: Could not connect to " + remoteHost + " (" + e.Message + ").");
             }
 
             TabPage tabPage = new TabPage(name);
 
             PluginLoader pluginLoader = SetupNodePluginLoader(con, tabPage);
 
-            Node node = new Node(name, con, username, password, pluginLoader);
+            Node node = new Node(name, con, remoteHost, username, password, pluginLoader);
             nodes.Add(node);
 
             ToolStripMenuItem menuItem = SetupNodeMenuItem(node);
@@ -253,7 +236,8 @@ namespace RSAS.ClientSide
                 //remove the server's tab page
                 nodeTabControl.TabPages.Remove(nodeMetaData[node].TabPage);
             }
-            node.Connection.Disconnect();
+            if (node.Connection != null)
+                node.Connection.Disconnect();
             nodes.Remove(node);
             nodeMetaData.Remove(node);
             SaveNodes();
@@ -340,9 +324,22 @@ namespace RSAS.ClientSide
             nodeDeleteMenuItem.Tag = node;
             nodeDeleteMenuItem.Click += new EventHandler(nodeDeleteMenuItem_Click);
 
-            nodeMenuItem.DropDownItems.AddRange(new ToolStripItem[] { nodeEditMenuItem, nodeDeleteMenuItem });
+            ToolStripMenuItem nodeReconnectMenuItem = new ToolStripMenuItem("Reconnect");
+            nodeReconnectMenuItem.Tag = node;
+            nodeReconnectMenuItem.Click += new EventHandler(nodeReconnectMenuItem_Click);
+
+            nodeMenuItem.DropDownItems.AddRange(new ToolStripItem[] { nodeEditMenuItem, nodeDeleteMenuItem, nodeReconnectMenuItem });
 
             return nodeMenuItem;
+        }
+
+        void nodeReconnectMenuItem_Click(object sender, EventArgs e)
+        {
+            ToolStripMenuItem item = sender as ToolStripMenuItem;
+            Node node = item.Tag as Node;
+            string[] endPoint = node.RemoteEndPoint.Split(':');
+            RemoveNode(node);
+            AddNode(IPAddress.Parse(endPoint[0]), int.Parse(endPoint[1]), node.Name, node.Username, node.Password);
         }
 
         TabPage SetupNodeTabPage(Node node)
@@ -356,7 +353,7 @@ namespace RSAS.ClientSide
             ToolStripMenuItem item = sender as ToolStripMenuItem;
             Node node = item.Tag as Node;
 
-            string[] endPoint = node.Connection.RemoteEndPoint.Split(':');
+            string[] endPoint = node.RemoteEndPoint.Split(':');
 
             AddServerForm addServerForm = new AddServerForm(node.Name, endPoint[0], endPoint[1], node.Username, node.Password);
             addServerForm.DetailsSubmitted += new AddServerForm.AddServerFormDetailsSubmittedEventHandler(delegate(object addServerSender, AddServerFormDetailsSubmittedEventArgs addServerArgs)
