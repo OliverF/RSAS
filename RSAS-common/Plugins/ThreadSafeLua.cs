@@ -68,5 +68,14 @@ namespace RSAS.Plugins
         {
             lua.RegisterGlobalFunction(name, handler);
         }
+
+        public void ThrowError(string message)
+        {
+            //error level 1 = this lua.Execute call
+            //error level 2 = managed function defined in a framework, no line numbers
+            //error level 3 = Lua defined alias
+            //error level 4 = user code call
+            this.lua.Execute("error('" + message + "', 4)");
+        }
     }
 }
