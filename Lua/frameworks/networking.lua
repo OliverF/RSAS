@@ -18,7 +18,8 @@ function RSAS.Networking.Hook(trigger, callback)
 		RSAS.Networking.Hooks[trigger] = {}
 	end
 
-	table.insert(RSAS.Networking.Hooks[trigger], callback)
+	--track the source of the script requesting the callback so that errors in the callbacks can be correctly blamed
+	table.insert(RSAS.Networking.Hooks[trigger], {callback = callback, source = _RSAS_Source})
 end
 
 function RSAS.Networking.TriggerCallback(trigger)
@@ -27,7 +28,9 @@ function RSAS.Networking.TriggerCallback(trigger)
 	for _, v in pairs(RSAS.Networking.Hooks[trigger]) do
 		local data = {}
 		RSAS.Networking.GetTable(trigger, data)
-		v(data)
+		--ensure calls beyond this are attributed to the source script which requested the callback
+		_RSAS_SetSource(v.source)
+		v.callback(data)
 	end
 	
 end

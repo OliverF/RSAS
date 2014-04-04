@@ -10,7 +10,9 @@ function RSAS.Timer.Hook(id, delay, callback)
 		RSAS.Timer.Hooks[id] = {}
 	end
 
-	table.insert(RSAS.Timer.Hooks[id], callback)
+	--track the source of the script requesting the callback so that errors in the callbacks can be correctly blamed
+	table.insert(RSAS.Timer.Hooks[id], {callback = callback, source = _RSAS_Source})
+
 	_RSAS_Timer_Register(id, delay)
 end
 
@@ -18,7 +20,9 @@ function RSAS.Timer.TriggerCallback(trigger)
 	if (not RSAS.Timer.Hooks[trigger]) then return end
 
 	for _, v in pairs(RSAS.Timer.Hooks[trigger]) do
-		v()
+		--ensure calls beyond this are attributed to the source script which requested the callback
+		_RSAS_SetSource(v.source)
+		v.callback()
 	end
 	
 end

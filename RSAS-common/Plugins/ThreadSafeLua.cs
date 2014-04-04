@@ -17,14 +17,24 @@ namespace RSAS.Plugins
 
         public event ThreadSafeLuaErrorEventHandler ExecutionError;
 
-        public ThreadSafeLua()
+        private string currentSource = "";
+
+        public ThreadSafeLua():this(new Lua())
         {
-            this.lua = new Lua();
         }
 
         public ThreadSafeLua(Lua lua)
         {
             this.lua = lua;
+            lua.RegisterGlobalFunction("_RSAS_SetSource", delegate(LuaManagedFunctionArgs args)
+            {
+                LuaString source = args.Input.ElementAt(0) as LuaString;
+
+                if (source == null)
+                    return;
+
+                this.currentSource = source.Value;
+            });
         }
 
         public LuaType[] Execute(string code, string source)
@@ -33,17 +43,20 @@ namespace RSAS.Plugins
             LuaType[] result = null;
             try
             {
+                //set the current script source for plugins and frameworks to access
+                lua.Execute("_RSAS_Source = [[" + source + "]]");
+                this.currentSource = source;
                 result = lua.Execute(code);
             }
             catch (LuaRuntimeErrorException e)
             {
                 if (ExecutionError != null)
-                    ExecutionError(this, new ThreadSafeLuaExecutionErrorEventArgs(e.Message, e.Line, source));
+                    ExecutionError(this, new ThreadSafeLuaExecutionErrorEventArgs(e.Message, e.Line, currentSource));
             }
             catch (LuaSyntaxErrorException e)
             {
                 if (ExecutionError != null)
-                    ExecutionError(this, new ThreadSafeLuaExecutionErrorEventArgs(e.Message, e.Line, source));
+                    ExecutionError(this, new ThreadSafeLuaExecutionErrorEventArgs(e.Message, e.Line, currentSource));
             }
 
             mutex.ReleaseMutex();
