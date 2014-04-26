@@ -22,5 +22,10 @@ namespace RSAS.ServerSide
         {
             return Path.Combine(USERPATH, username, USERCREDENTIALSFILENAME);
         }
+
+        public static string BuildUserPath(string username)
+        {
+            return Path.Combine(USERPATH, username);
+        }
     }
 }

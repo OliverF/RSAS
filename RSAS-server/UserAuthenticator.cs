@@ -7,6 +7,7 @@ using RSAS.Networking;
 using RSAS.Networking.Messages;
 using RSAS.Utilities;
 using RSAS.Plugins.Frameworks;
+using RSAS.Logging;
 
 namespace RSAS.ServerSide
 {
@@ -41,11 +42,94 @@ namespace RSAS.ServerSide
             }
         }
 
-        static bool CheckCredentials(string username, string hashedPassword)
+        public static void CreateCredentials(string userDirectory, string username, string password)
+        {
+            if (Directory.Exists(userDirectory))
+            {
+                if (!Directory.Exists(Settings.BuildUserPath(username)))
+                {
+                    Directory.CreateDirectory(Settings.BuildUserPath(username));
+                    Directory.CreateDirectory(Settings.BuildUserPluginPath(username));
+
+                    string hash = SecurityUtilities.PBKDF2(password);
+
+                    StreamWriter sw = new StreamWriter(Settings.BuildUserCredentialsFilePath(username));
+                    sw.Write(hash);
+                    sw.Close();
+
+                    User user = new User(username, hash);
+                    users.Add(username, user);
+                }
+            }
+            else
+            {
+                throw new DirectoryNotFoundException("The directory containing user definitions was not found. Ensure the 'users' directory exists at " + Settings.USERPATH);
+            }
+        }
+
+        public static void DeleteCredentials(string userDirectory, string username)
+        {
+            if (Directory.Exists(userDirectory))
+            {
+                if (Directory.Exists(Settings.BuildUserPath(username)))
+                {
+                    List<string> dirs = Directory.EnumerateDirectories(Settings.BuildUserPluginPath(username)).ToList<string>();
+
+                    if (dirs.Count > 0)
+                        throw new UserDirectoryNotEmptyException("The plugin directory for user '" + username + "' is not empty");
+                    else
+                        Directory.Delete(Settings.BuildUserPath(username), true);
+                }
+            }
+            else
+            {
+                throw new DirectoryNotFoundException("The directory containing user definitions was not found. Ensure the 'users' directory exists at " + Settings.USERPATH);
+            }
+        }
+
+        public static void ModifyCredentials(string userDirectory, string username, string password)
+        {
+            if (Directory.Exists(userDirectory))
+            {
+                if (Directory.Exists(Settings.BuildUserPath(username)))
+                {
+                    string hash = SecurityUtilities.PBKDF2(password);
+
+                    StreamWriter sw = new StreamWriter(Settings.BuildUserCredentialsFilePath(username));
+                    sw.Write(hash);
+                    sw.Close();
+
+                    User user = new User(username, hash);
+
+                    if (users.ContainsKey(username))
+                        users[username] = user;
+                    else
+                        users.Add(username, user);
+                }
+                else
+                {
+                    throw new DirectoryNotFoundException("The directory for the user '" + username + "' could not be found");
+                }
+            }
+            else
+            {
+                throw new DirectoryNotFoundException("The directory containing user definitions was not found. Ensure the 'users' directory exists at " + Settings.USERPATH);
+            }
+        }
+
+        static bool CheckCredentials(string username, string password)
         {
             if (users.ContainsKey(username))
             {
-                return (users[username].AuthenticationKey == hashedPassword);
+                try
+                {
+                    return (users[username].AuthenticationKey == SecurityUtilities.PBKDF2(password, SecurityUtilities.SaltFromKey(users[username].AuthenticationKey)));
+                }
+                catch (ArgumentException e)
+                {
+                    TextLogger.TimestampedLog(LogType.Information, "User " + username + " attempted to apply an invalid key, possibly indicating an attack: " + e.ToString());
+                    return false;
+                }
             }
             else
             {

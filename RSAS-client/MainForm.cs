@@ -289,7 +289,7 @@ namespace RSAS.ClientSide
             {
                 if (connectionMessageArgs.Message.GetType() == typeof(AuthenticationRequest))
                 {
-                    (connectionSender as Connection).SendMessage(new AuthenticationResponse(username, SecurityUtilities.MD5Hash(password)));
+                    (connectionSender as Connection).SendMessage(new AuthenticationResponse(username, password));
                 }
                 else if (connectionMessageArgs.Message.GetType() == typeof(AuthenticationResult))
                 {

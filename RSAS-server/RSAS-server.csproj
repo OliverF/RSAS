@@ -52,6 +52,7 @@
     <Compile Include="Settings.cs" />
     <Compile Include="User.cs" />
     <Compile Include="UserAuthenticator.cs" />
+    <Compile Include="UserDirectoryNotEmptyException.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Includes\liblua51.so">
