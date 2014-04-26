@@ -51,6 +51,9 @@ namespace RSAS.ClientSide
                 lua.RegisterGlobalFunction("_RSAS_GUI_Chart_CreateSeries", this.ChartCreateSeries);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Chart_SetAxesLimits", this.ChartSetAxesLimits);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Label_SetText", this.LabelSetText);
+                lua.RegisterGlobalFunction("_RSAS_GUI_Label_SetFont", this.LabelSetFont);
+                lua.RegisterGlobalFunction("_RSAS_GUI_Label_SetFontSize", this.LabelSetFontSize);
+                lua.RegisterGlobalFunction("_RSAS_GUI_Label_SetAutoSize", this.LabelSetAutoSize);
                 lua.RegisterGlobalFunction("_RSAS_GUI_Button_SetText", this.ButtonSetText);
             });
         }
@@ -75,7 +78,10 @@ namespace RSAS.ClientSide
                     }
                 case ControlType.Label:
                     {
-                        return new Label();
+                        Label label = new Label();
+                        label.AutoSize = true;
+                        label.AutoEllipsis = true;
+                        return label;
                     }
                 case ControlType.Container:
                     {
@@ -132,6 +138,78 @@ namespace RSAS.ClientSide
             ControlWork work = delegate()
             {
                 label.Text = text.Value;
+            };
+
+            if (label.InvokeRequired)
+                label.Invoke(work);
+            else
+                work();
+        }
+
+        private void LabelSetFont(LuaManagedFunctionArgs args)
+        {
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaString font = args.Input.ElementAtOrDefault(1) as LuaString;
+
+            if (controlID == null || font == null || !this.controls.ContainsKey(controlID.Value))
+                return;
+
+            Label label = this.controls[controlID.Value] as Label;
+
+            if (label == null)
+                return;
+
+            ControlWork work = delegate()
+            {
+                label.Font = new Font(font.Value, label.Font.SizeInPoints);
+            };
+
+            if (label.InvokeRequired)
+                label.Invoke(work);
+            else
+                work();
+        }
+
+        private void LabelSetFontSize(LuaManagedFunctionArgs args)
+        {
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaNumber fontSize = args.Input.ElementAtOrDefault(1) as LuaNumber;
+
+            if (controlID == null || fontSize == null || !this.controls.ContainsKey(controlID.Value))
+                return;
+
+            Label label = this.controls[controlID.Value] as Label;
+
+            if (label == null)
+                return;
+
+            ControlWork work = delegate()
+            {
+                label.Font = new Font(label.Font.FontFamily, (float)fontSize.Value);
+            };
+
+            if (label.InvokeRequired)
+                label.Invoke(work);
+            else
+                work();
+        }
+
+        private void LabelSetAutoSize(LuaManagedFunctionArgs args)
+        {
+            LuaString controlID = args.Input.ElementAtOrDefault(0) as LuaString;
+            LuaBoolean autoSize = args.Input.ElementAtOrDefault(1) as LuaBoolean;
+
+            if (controlID == null || autoSize == null || !this.controls.ContainsKey(controlID.Value))
+                return;
+
+            Label label = this.controls[controlID.Value] as Label;
+
+            if (label == null)
+                return;
+
+            ControlWork work = delegate()
+            {
+                label.AutoSize = autoSize.Value;
             };
 
             if (label.InvokeRequired)
@@ -491,6 +569,16 @@ namespace RSAS.ClientSide
                         t.IsBackground = true;
                         t.Start();
                     };
+                    control.Resize += new EventHandler(delegate(object sender, EventArgs e)
+                    {
+                        Thread t = new Thread(delegate()
+                        {
+                            lua.Execute("RSAS.GUI.Trigger('" + controlID + "', 'OnResize')", GUIFramework.frameworkScriptName);
+                        });
+                        t.IsBackground = true;
+                        t.Start();
+                    });
+
                     controls.Add(controlID.Value, control);
                     parent.Controls.Add(control);
                 };

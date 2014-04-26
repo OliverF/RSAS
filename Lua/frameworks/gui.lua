@@ -135,6 +135,18 @@ function Label:SetText(text)
 	_RSAS_GUI_Label_SetText(self.ControlID, text)
 end
 
+function Label:SetFont(font)
+	_RSAS_GUI_Label_SetFont(self.ControlID, font)
+end
+
+function Label:SetFontSize(size)
+	_RSAS_GUI_Label_SetFontSize(self.ControlID, size)
+end
+
+function Label:SetAutoSize(autoSize)
+	_RSAS_GUI_Label_SetAutoSize(self.ControlID, autoSize)
+end
+
 setmetatable(Label, RSAS.GUI.Control)
 
 RSAS.GUI.Label = Label
