@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Net;
+using System.Threading;
 
 namespace RSAS.ClientSide
 {
@@ -102,7 +103,48 @@ namespace RSAS.ClientSide
             else
             {
                 hostAddressValid = false;
-                errorProvider.SetError(hostAddressTextBox, "Invalid IP address.");
+                errorProvider.SetError(hostAddressTextBox, "Performing DNS lookup...");
+
+                Thread t = new Thread(delegate()
+                {
+                    IPAddress[] addresses;
+
+                    try
+                    {
+                        addresses = Dns.GetHostAddresses(hostAddressTextBox.Text);
+                    }
+                    catch (System.Net.Sockets.SocketException socketException)
+                    {
+                        hostAddressValid = false;
+                        MethodInvoker errorWork = delegate()
+                        {
+                            errorProvider.SetError(hostAddressTextBox, "Invalid hostname: " + socketException.Message);
+                        };
+
+                        if (this.InvokeRequired)
+                            this.Invoke(errorWork);
+                        else
+                            errorWork();
+                        return;
+                    }
+
+                    hostAddress = addresses[0];
+                    hostAddressValid = true;
+
+                    MethodInvoker work = delegate()
+                    {
+                        hostAddressTextBox.Text = addresses[0].ToString();
+                        errorProvider.SetError(hostAddressTextBox, null);
+                    };
+
+                    if (hostAddressTextBox.InvokeRequired)
+                        hostAddressTextBox.Invoke(work);
+                    else
+                        work();
+
+                });
+
+                t.Start();
             }
         }
 
