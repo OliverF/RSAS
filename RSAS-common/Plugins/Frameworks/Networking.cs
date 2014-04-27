@@ -108,7 +108,8 @@ namespace RSAS.Plugins.Frameworks
 
         void TriggerCallbacks(string identifier)
         {
-            lua.Execute("RSAS.Networking.TriggerCallback('" + identifier + "')", Networking.frameworkScriptName);
+            if (lua != null)
+                lua.Execute("RSAS.Networking.TriggerCallback('" + identifier + "')", Networking.frameworkScriptName);
         }
     }
 }
