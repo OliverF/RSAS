@@ -57,6 +57,8 @@ function RSAS.GUI.Control.New(controlType, controlID)
 		setmetatable(newControl, RSAS.GUI.Container)
 	elseif(controlType == "button") then
 		setmetatable(newControl, RSAS.GUI.Button)
+	else
+		return nil
 	end
 
 	return newControl
