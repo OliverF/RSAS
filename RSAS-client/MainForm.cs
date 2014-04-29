@@ -84,6 +84,7 @@ namespace RSAS.ClientSide
             }
             
             AddNode(e.HostAddress, e.HostPort, e.ServerName, e.Username, e.Password);
+            SaveNodes();
 
             (sender as AddServerForm).Close();
         }
@@ -223,8 +224,6 @@ namespace RSAS.ClientSide
                 this.Invoke(work);
             else
                 work();
-
-            SaveNodes();
         }
 
         void RemoveNode(Node node)

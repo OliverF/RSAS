@@ -35,9 +35,9 @@
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showLogConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.primaryDisplayPanel = new System.Windows.Forms.Panel();
+            this.nodeTabControl = new System.Windows.Forms.TabControl();
             this.consoleLogTextBox = new System.Windows.Forms.TextBox();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
-            this.nodeTabControl = new System.Windows.Forms.TabControl();
             this.menuStrip.SuspendLayout();
             this.primaryDisplayPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
@@ -105,6 +105,15 @@
             this.primaryDisplayPanel.Size = new System.Drawing.Size(784, 306);
             this.primaryDisplayPanel.TabIndex = 4;
             // 
+            // nodeTabControl
+            // 
+            this.nodeTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.nodeTabControl.Location = new System.Drawing.Point(0, 0);
+            this.nodeTabControl.Name = "nodeTabControl";
+            this.nodeTabControl.SelectedIndex = 0;
+            this.nodeTabControl.Size = new System.Drawing.Size(784, 306);
+            this.nodeTabControl.TabIndex = 0;
+            // 
             // consoleLogTextBox
             // 
             this.consoleLogTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -134,15 +143,6 @@
             this.splitContainer.SplitterDistance = 306;
             this.splitContainer.TabIndex = 6;
             // 
-            // nodeTabControl
-            // 
-            this.nodeTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.nodeTabControl.Location = new System.Drawing.Point(0, 0);
-            this.nodeTabControl.Name = "nodeTabControl";
-            this.nodeTabControl.SelectedIndex = 0;
-            this.nodeTabControl.Size = new System.Drawing.Size(784, 306);
-            this.nodeTabControl.TabIndex = 0;
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -152,7 +152,8 @@
             this.Controls.Add(this.menuStrip);
             this.MainMenuStrip = this.menuStrip;
             this.Name = "MainForm";
-            this.Text = "MainForm";
+            this.ShowIcon = false;
+            this.Text = "RSAS";
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
             this.primaryDisplayPanel.ResumeLayout(false);

@@ -161,6 +161,7 @@
             this.Controls.Add(this.hostPortTextBox);
             this.Controls.Add(this.hostAddressTextBox);
             this.Name = "AddServerForm";
+            this.ShowIcon = false;
             this.Text = "Server Details";
             this.ResumeLayout(false);
             this.PerformLayout();

@@ -16,6 +16,12 @@ function RSAS.Timer.Hook(id, delay, callback)
 	_RSAS_Timer_Register(id, delay)
 end
 
+function RSAS.Timer.Unhook(id)
+	RSAS.Timer.Hooks[id] = {}
+
+	_RSAS_Timer_Unregister(id)
+end
+
 function RSAS.Timer.TriggerCallback(trigger)
 	if (not RSAS.Timer.Hooks[trigger]) then return end
 
