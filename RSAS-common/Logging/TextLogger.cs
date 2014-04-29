@@ -15,7 +15,7 @@ namespace RSAS.Logging
 
         public static void TimestampedLog(LogType type, string message)
         {
-            string logMessage = "[" + type.ToString() + "] " + message + " " + System.DateTime.Now.ToString("H:m:s dd/MM/yyyy") + Environment.NewLine;
+            string logMessage = "[" + type.ToString() + "] " + message + " " + System.DateTime.Now.ToString("HH:mm:ss dd/MM/yyyy") + Environment.NewLine;
 
             if (MessageLogged != null)
                 MessageLogged(null, new TextLoggerMessageLoggedEventArgs(logMessage));
