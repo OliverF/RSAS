@@ -271,14 +271,14 @@ namespace RSAS.ClientSide
 
         Connection SetupNodeConnection(TcpClient client, string serverName, string username, string password)
         {
-            bool timedOut = false;
+            ManualResetEvent stopCheck = new ManualResetEvent(false);
             bool authed = false;
             bool authFail = false;
             System.Timers.Timer authTimeout = new System.Timers.Timer();
             authTimeout.Interval = 5000;
             authTimeout.Elapsed += new System.Timers.ElapsedEventHandler(delegate(object sender, System.Timers.ElapsedEventArgs e)
             {
-                timedOut = true;
+                stopCheck.Set();
                 authTimeout.Stop();
             });
             authTimeout.Start();
@@ -296,18 +296,19 @@ namespace RSAS.ClientSide
                     AuthenticationResult authenticationResult = connectionMessageArgs.Message as AuthenticationResult;
                     authed = authenticationResult.AuthenticationAccepted;
                     authFail = !authed;
+                    stopCheck.Set();
                 }
             });
 
-            //wait for the auth result
-            while (!timedOut)
-                if (authed)
-                    return con;
-                else if (authFail)
-                    throw new ServerBadCredentialsException("'" + serverName + "' rejected credentials.");
+            //wait for the auth result or timeout
+            stopCheck.WaitOne();
+            if (authed)
+                return con;
+            else if (authFail)
+                throw new ServerBadCredentialsException("'" + serverName + "' rejected credentials.");
 
             //throw exception in the event of a timeout
-            throw new ServerUnreachableException("Connection error: Could not authenticate to " + serverName + ".");
+            throw new ServerUnreachableException("Connection error: Could not connect to '" + serverName + "'.");
         }
 
         ToolStripMenuItem SetupNodeMenuItem(Node node)
