@@ -188,6 +188,7 @@ namespace RSAS.ClientSide
             catch (SocketException e)
             {
                 TextLogger.TimestampedLog(LogType.Warning, "Connection error: Could not connect to " + remoteHost + " (" + e.Message + ").");
+                return;
             }
 
             Connection con = null;
@@ -201,6 +202,12 @@ namespace RSAS.ClientSide
             catch (ServerBadCredentialsException e)
             {
                 TextLogger.TimestampedLog(LogType.Warning, "Connection error: Could not connect to " + remoteHost + " (" + e.Message + ").");
+                return;
+            }
+            catch (ServerUnreachableException e)
+            {
+                TextLogger.TimestampedLog(LogType.Warning, "Connection error: Could not connect to " + remoteHost + " (" + e.Message + ").");
+                return;
             }
 
             TabPage tabPage = new TabPage(name);
