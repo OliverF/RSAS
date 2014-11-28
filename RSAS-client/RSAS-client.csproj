@@ -42,6 +42,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Includes\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="NPlot">
+      <HintPath>..\Includes\NPlot.dll</HintPath>
+    </Reference>
     <Reference Include="RSAS-common">
       <HintPath>..\RSAS-common\bin\Release\RSAS-common.dll</HintPath>
     </Reference>

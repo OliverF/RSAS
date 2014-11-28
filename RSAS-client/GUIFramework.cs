@@ -4,9 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Drawing;
-using System.Windows.Forms.DataVisualization.Charting;
-using System.Windows.Forms.DataVisualization.Charting.Data;
-using System.Windows.Forms.DataVisualization.Charting.ChartTypes;
+using NPlot;
 using System.ComponentModel;
 using System.Threading;
 using Lua4Net;
@@ -23,6 +21,8 @@ namespace RSAS.ClientSide
         enum ControlType { Container, Chart, Label, Button };
 
         Dictionary<string, Control> controls = new Dictionary<string, Control>();
+
+        Dictionary<string, BaseSequencePlot> chartItems = new Dictionary<string, BaseSequencePlot>();
 
         Control parent;
 
@@ -65,15 +65,10 @@ namespace RSAS.ClientSide
             {
                 case ControlType.Chart:
                     {
-                        Chart chart = new Chart();
-
-                        ChartArea chartArea = new ChartArea();
-                        chart.ChartAreas.Add(chartArea);
-
+                        NPlot.Windows.PlotSurface2D chart = new NPlot.Windows.PlotSurface2D();
                         Legend legend = new Legend();
-                        legend.Name = "legend";
-                        chart.Legends.Add(legend);
-
+                        legend.BorderStyle = LegendBase.BorderType.Line;
+                        chart.Legend = legend;
                         return chart;
                     }
                 case ControlType.Label:
@@ -227,28 +222,22 @@ namespace RSAS.ClientSide
             if (controlID == null || seriesName == null || !this.controls.ContainsKey(controlID.Value))
                 return;
 
-            Chart chart = this.controls[controlID.Value] as Chart;
+            NPlot.Windows.PlotSurface2D chart = this.controls[controlID.Value] as NPlot.Windows.PlotSurface2D;
 
             if (chart == null)
                 return;
 
-            Series series = new Series(seriesName.Value);
-            series.ChartType = SeriesChartType.Line;
-
-
-            if (seriesType != null)
-            {
-                try
-                {
-                    SeriesChartType type = (SeriesChartType)Enum.Parse(typeof(SeriesChartType), seriesType.ToString(), true);
-                    series.ChartType = type;
-                }
-                catch (ArgumentException) { }
-            }
-
             ControlWork work = delegate()
             {
-                chart.Series.Add(series);
+                switch (seriesType.Value.ToLower())
+                {
+                    case "line":
+                        LinePlot line = new LinePlot();
+                        line.Label = seriesName.Value;
+                        chart.Add(line);
+                        chartItems.Add(seriesName.Value, line);
+                        break;
+                }
             };
 
             if (chart.InvokeRequired)
@@ -266,22 +255,19 @@ namespace RSAS.ClientSide
             if (values == null || controlID == null || seriesName == null || !this.controls.ContainsKey(controlID.Value))
                 return;
 
-            Chart chart = this.controls[controlID.Value] as Chart;
+            NPlot.Windows.PlotSurface2D chart = this.controls[controlID.Value] as NPlot.Windows.PlotSurface2D;
 
             if (chart == null)
                 return;
 
-            Series series = chart.Series.FindByName(seriesName.Value);
+            BaseSequencePlot series = null;
 
-            if (series == null)
+            if (!chartItems.TryGetValue(seriesName.Value, out series))
                 return;
 
             ControlWork work = delegate()
             {
-                //reset
-                series.Points.Clear();
-
-                Dictionary<LuaValueType, DataPoint> points = new Dictionary<LuaValueType, DataPoint>();
+                Dictionary<LuaValueType, PointD> points = new Dictionary<LuaValueType, PointD>();
 
                 LuaUtilities.RecurseLuaTableCallback callback = new LuaUtilities.RecurseLuaTableCallback(delegate(List<LuaValueType> path, LuaValueType key, LuaType value)
                 {
@@ -290,7 +276,7 @@ namespace RSAS.ClientSide
 
                     //set new point if this key doesn't exist
                     if (!points.ContainsKey(path[0]))
-                        points.Add(path[0], new DataPoint());
+                        points.Add(path[0], new PointD(0, 0));
 
                     LuaNumber component = value as LuaNumber;
 
@@ -300,19 +286,28 @@ namespace RSAS.ClientSide
                     //check type of element - x or y
                     if (key.ToString() == "x")
                     {
-                        points[path[0]].XValue = component.Value;
+                        points[path[0]] = new PointD(component.Value, points[path[0]].Y);
                     }
                     else if (key.ToString() == "y")
                     {
-                        double[] yValues = { component.Value };
-                        points[path[0]].YValues = yValues;
+                        points[path[0]] = new PointD(points[path[0]].X, component.Value);
                     }
                 });
 
                 LuaUtilities.RecurseLuaTable(values, callback);
 
-                foreach (KeyValuePair<LuaValueType, DataPoint> kv in points)
-                    series.Points.Add(kv.Value);
+                List<double> x = new List<double>();
+                List<double> y = new List<double>();
+
+                foreach (KeyValuePair<LuaValueType, PointD> kv in points)
+                {
+                    x.Add(kv.Value.X);
+                    y.Add(kv.Value.Y);
+                }
+
+                series.AbscissaData = x;
+                series.OrdinateData = y;
+                chart.Refresh();
             };
 
             if (chart.InvokeRequired)
@@ -334,24 +329,24 @@ namespace RSAS.ClientSide
             if (controlID == null || !this.controls.ContainsKey(controlID.Value))
                 return;
 
-            Chart chart = this.controls[controlID.Value] as Chart;
+            NPlot.Windows.PlotSurface2D chart = this.controls[controlID.Value] as NPlot.Windows.PlotSurface2D;
 
-            if (chart == null)
+            if (chart == null || chart.XAxis1 == null || chart.YAxis1 == null) //axes will be null if no plots exist on the chart yet
                 return;
 
             ControlWork work = delegate()
             {
                 if (xAxisMin != null)
-                    chart.ChartAreas[0].AxisX.Minimum = xAxisMin.Value;
+                    chart.XAxis1.WorldMin = xAxisMin.Value;
 
                 if (xAxisMax != null)
-                    chart.ChartAreas[0].AxisX.Maximum = xAxisMax.Value;
+                    chart.XAxis1.WorldMax = xAxisMax.Value;
 
                 if (yAxisMin != null)
-                    chart.ChartAreas[0].AxisY.Minimum = yAxisMin.Value;
+                    chart.YAxis1.WorldMin = yAxisMin.Value;
 
                 if (yAxisMax != null)
-                    chart.ChartAreas[0].AxisY.Maximum = yAxisMax.Value;
+                    chart.YAxis1.WorldMax = yAxisMax.Value;
             };
 
             if (chart.InvokeRequired)
