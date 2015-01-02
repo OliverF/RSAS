@@ -62,6 +62,7 @@ namespace RSAS.Plugins.Frameworks
                     {
                         Process p = Process.Start(processInfo);
                         args.Output.Add(new LuaString(p.StandardOutput.ReadToEnd()));
+                        p.Close();
                     }
                     catch
                     {
