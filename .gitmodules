@@ -1,0 +1,3 @@
+[submodule "Lua4Net"]
+	path = Lua4Net
+	url = https://github.com/OliverF/Lua4Net

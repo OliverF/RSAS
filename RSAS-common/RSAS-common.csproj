@@ -31,9 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Lua4Net">
-      <HintPath>..\Includes\Lua4Net.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Includes\Newtonsoft.Json.dll</HintPath>
@@ -72,7 +69,12 @@
     <Compile Include="Utilities\LuaUtilities.cs" />
     <Compile Include="Utilities\SecurityUtilities.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Lua4Net\Lua4Net\Lua4Net.csproj">
+      <Project>{86719C9C-6283-49BA-9D90-302B7CF9BFD6}</Project>
+      <Name>Lua4Net</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
